@@ -1,0 +1,179 @@
+PŘÍPRAVA PROSTŘEDÍ PRO PYTHON VE WINDOWS: WSL 2 A DEBIAN
+======================================================
+
+1. Co budeme instalovat
+----------------------
+WSL 2 umožňuje používat Linux přímo ve Windows. Debian je linuxová
+distribuce. Git spravuje historii souborů, GitHub CLI (příkaz gh) pracuje
+s GitHubem, Kate je grafický textový editor a Python spouští naše programy.
+
+Potřebuješ připojení k internetu a práva správce Windows pro instalaci WSL.
+Návod je určen především pro Windows 11. Instalační příkazy podporuje také
+Windows 10 od verze 2004 (sestavení 19041); grafický editor Kate přes WSLg
+vyžaduje Windows 10 sestavení 19044 nebo novější, případně Windows 11.
+Verzi Windows zjistíš přes Win+R, zadáním winver a stiskem Enter.
+
+Příkazy zadávej po jednotlivých řádcích a každý potvrď klávesou Enter.
+Nekopíruj nadpisy ani vysvětlení. Rozlišuj PowerShell ve Windows a konzoli
+Debianu: linuxové příkazy sudo a apt patří až do Debianu.
+
+2. Instalace WSL 2 a Debianu (PowerShell ve Windows)
+--------------------------------------------------
+Otevři nabídku Start, napiš PowerShell, klikni na něj pravým tlačítkem
+a vyber „Spustit jako správce“. Potvrď dotaz Windows.
+
+Zadej:
+
+    wsl --install -d Debian
+
+Tím nainstaluješ WSL a přímo distribuci Debian. Pokud instalace požaduje
+restart počítače, restartuj ho a následně otevři Debian z nabídky Start.
+Nové instalace přes tento příkaz standardně používají WSL 2.
+
+Pokud už WSL máš a Debian zatím ne, použij tentýž příkaz. Pokud už máš
+i Debian, neopakuj instalaci a pokračuj kontrolou níže.
+
+V PowerShellu aktualizuj WSL a zkontroluj distribuce:
+
+    wsl --update
+    wsl --list --verbose
+
+U řádku Debian má být ve sloupci VERSION číslo 2. Pokud je tam 1, zadej:
+
+    wsl --set-version Debian 2
+
+Pokud instalace hlásí vypnutou virtualizaci, povol ji v nastavení UEFI/BIOS
+počítače (Intel VT-x nebo AMD-V/SVM). Postup závisí na výrobci počítače.
+Pokud se stahování zasekne na 0 %, zkus podle dokumentace Microsoftu:
+
+    wsl --install --web-download -d Debian
+
+3. První spuštění a otevření konzole Debianu
+------------------------------------------
+Debian otevřeš jedním z následujících způsobů:
+  - V nabídce Start vyhledej Debian a spusť ho.
+  - Ve Windows Terminal vyber v nabídce u nové karty profil Debian,
+    pokud je v nabídce dostupný.
+  - V PowerShellu zadej: wsl -d Debian
+
+Při prvním spuštění počkej na dokončení přípravy a vytvoř linuxové
+uživatelské jméno (například student) a heslo. Jde o samostatný účet uvnitř
+Debianu. Při psaní hesla se nezobrazují ani hvězdičky; je to normální.
+
+Po přihlášení uvidíš výzvu podobnou student@pocitac:~$.
+Znak $ neopisuj. Všechny následující příkazy zadávej do této konzole.
+Konzoli ukončíš příkazem exit; znovu ji otevřeš stejným způsobem.
+
+4. Instalace Gitu, GitHub CLI, Kate a Pythonu (v Debianu)
+------------------------------------------------------
+Nejprve aktualizuj seznam dostupných balíčků:
+
+    sudo apt update
+
+Potom nainstaluj nástroje z repozitářů Debianu:
+
+    sudo apt install git gh kate python3 python3-venv python3-pip
+
+sudo spouští příkaz s oprávněním správce Linuxu a může vyžádat heslo,
+které jsi vytvořil v Debianu. Instalaci potvrď podle zobrazené výzvy.
+Balíček gh je GitHub CLI. python3-venv slouží k virtuálním prostředím
+a python3-pip k instalaci dalších knihoven; náš příklad je nepotřebuje.
+
+Ověř instalaci:
+
+    git --version
+    gh --version
+    kate --version
+    python3 --version
+
+Každý příkaz by měl vypsat verzi daného programu.
+
+5. Přihlášení do GitHub CLI
+--------------------------
+V konzoli Debianu zadej:
+
+    gh auth login --hostname github.com --git-protocol https --web
+
+Postupuj podle pokynů. Pokud se gh zeptá na propojení přihlašování Gitu
+s účtem GitHub, potvrď ho. Opiš jednorázový kód na stránce otevřené
+v prohlížeči a přihlas se ke svému účtu GitHub. Pokud se prohlížeč
+neotevře automaticky, otevři ve Windows adresu uvedenou v konzoli.
+Heslo k účtu GitHub nezadávej do příkazového řádku.
+
+Zkontroluj přihlášení:
+
+    gh auth status
+
+Pro soukromý repozitář musí mít přihlášený účet oprávnění k jeho čtení.
+
+6. Stažení projektu
+-------------------
+Vytvoř složku pro projekty ve svém linuxovém domovském adresáři a otevři ji:
+
+    mkdir -p ~/Projekty
+    cd ~/Projekty
+
+Stáhni repozitář požadovaným příkazem:
+
+    gh repo clone AntoninMicka/ZakladyProgramovani
+
+Otevři staženou složku a vypiš soubory:
+
+    cd ZakladyProgramovani
+    ls
+    git status
+
+Klonování vytvoří místní kopii projektu včetně historie Gitu.
+Pokud už složka obsahující projekt existuje, neklonuj do ní znovu.
+Existující projekt otevři pomocí cd ~/Projekty/ZakladyProgramovani.
+
+7. Otevření programu v Kate a spuštění Pythonu
+--------------------------------------------
+Ve složce projektu otevři ukázkový soubor:
+
+    kate zaklady_pythonu.py &
+
+Znak & umožní dál používat konzoli, zatímco je editor otevřený.
+Kate se zobrazí jako grafické okno prostřednictvím WSLg.
+V editoru můžeš měnit kód a uložit ho klávesovou zkratkou Ctrl+S.
+
+Program spusť v konzoli Debianu ve složce projektu:
+
+    python3 zaklady_pythonu.py
+
+Program vypíše ukázky základní syntaxe. Po úpravě a uložení souboru
+ho spusť stejným příkazem znovu. Běžící program přerušíš pomocí Ctrl+C.
+
+Pokud Kate hlásí, že se nemůže připojit k displeji, ověř verzi Windows
+uvedenou v bodě 1 a aktualizuj ovladač grafické karty ve Windows.
+Ulož rozdělanou práci a v PowerShellu spusť:
+
+    wsl --update
+    wsl --shutdown
+
+Druhý příkaz ukončí všechny běžící distribuce WSL. Potom znovu otevři
+Debian a zopakuj spuštění Kate. Kate nespouštěj přes sudo.
+
+8. Příští práce na projektu
+--------------------------
+Po novém otevření Debianu přejdi do projektu a spusť program:
+
+    cd ~/Projekty/ZakladyProgramovani
+    python3 zaklady_pythonu.py
+
+Pro orientaci: pwd vypíše aktuální složku, ls její obsah a cd .. přejde
+do nadřazené složky. Linux rozlišuje velká a malá písmena v názvech.
+Složku otevřeš v Průzkumníku Windows příkazem explorer.exe .
+
+Oficiální dokumentace
+--------------------
+Instalace WSL a Debianu:
+https://learn.microsoft.com/en-us/windows/wsl/install
+Grafické aplikace přes WSLg:
+https://learn.microsoft.com/en-us/windows/wsl/tutorials/gui-apps
+Balíček GitHub CLI v Debianu:
+https://packages.debian.org/stable/gh
+Přihlášení do GitHub CLI:
+https://cli.github.com/manual/gh_auth_login
+Klonování repozitáře:
+https://cli.github.com/manual/gh_repo_clone
