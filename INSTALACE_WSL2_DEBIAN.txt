@@ -64,7 +64,7 @@ Po přihlášení uvidíš výzvu podobnou student@pocitac:~$.
 Znak $ neopisuj. Všechny následující příkazy zadávej do této konzole.
 Konzoli ukončíš příkazem exit; znovu ji otevřeš stejným způsobem.
 
-4. Instalace Gitu, GitHub CLI, Kate a Pythonu (v Debianu)
+4. Instalace Gitu, Kate a Pythonu (v Debianu)
 ------------------------------------------------------
 Nejprve aktualizuj seznam dostupných balíčků:
 
@@ -72,25 +72,29 @@ Nejprve aktualizuj seznam dostupných balíčků:
 
 Potom nainstaluj nástroje z repozitářů Debianu:
 
-    sudo apt install git gh kate python3 python3-venv python3-pip
+    sudo apt install git kate python3 python3-venv python3-pip
 
 sudo spouští příkaz s oprávněním správce Linuxu a může vyžádat heslo,
 které jsi vytvořil v Debianu. Instalaci potvrď podle zobrazené výzvy.
-Balíček gh je GitHub CLI. python3-venv slouží k virtuálním prostředím
+Balíček python3-venv slouží k virtuálním prostředím
 a python3-pip k instalaci dalších knihoven; náš příklad je nepotřebuje.
 
 Ověř instalaci:
 
     git --version
-    gh --version
     kate --version
     python3 --version
 
 Každý příkaz by měl vypsat verzi daného programu.
 
-5. Přihlášení do GitHub CLI
---------------------------
-V konzoli Debianu zadej:
+5. Volitelně: GitHub CLI a přihlášení
+-----------------------------------
+Pro stažení veřejného projektu v bodě 6 účet ani GitHub CLI nepotřebuješ.
+Pokud účet nemáš, celou tuto část přeskoč. Pro další práci s GitHubem
+můžeš volitelně nainstalovat GitHub CLI a přihlásit se:
+
+    sudo apt install gh
+    gh --version
 
     gh auth login --hostname github.com --git-protocol https --web
 
@@ -113,9 +117,9 @@ Vytvoř složku pro projekty ve svém linuxovém domovském adresáři a otevři
     mkdir -p ~/Projekty
     cd ~/Projekty
 
-Stáhni repozitář požadovaným příkazem:
+Veřejný repozitář stáhni pomocí Gitu bez účtu a bez přihlášení:
 
-    gh repo clone AntoninMicka/ZakladyProgramovani
+    git clone https://github.com/AntoninMicka/ZakladyProgramovani.git
 
 Otevři staženou složku a vypiš soubory:
 
@@ -176,4 +180,4 @@ https://packages.debian.org/stable/gh
 Přihlášení do GitHub CLI:
 https://cli.github.com/manual/gh_auth_login
 Klonování repozitáře:
-https://cli.github.com/manual/gh_repo_clone
+https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository

@@ -9,14 +9,14 @@
 #
 # Skript vytvoří vlastní cvičnou složku v dočasném adresáři Windows.
 # Klonování projektu i instalace Debianu jsou volitelné, nic se neodesílá.
-# Git a gh musí být nainstalované ve Windows, instalace v Debianu nestačí.
-# Pokud chybí, nainstaluj Git for Windows a GitHub CLI z oficiálních stránek:
+# Git musí být nainstalovaný ve Windows, instalace v Debianu nestačí.
+# Pokud chybí, nainstaluj Git for Windows z oficiální stránky:
 # https://git-scm.com/downloads/win
-# https://cli.github.com/
+# GitHub CLI (gh) je volitelné a pro toto cvičení není potřeba.
 # Potom otevři nové okno PowerShellu, aby se obnovila proměnná PATH.
 
 $ErrorActionPreference = 'Stop' # Chyby cmdletů zastaví skript.
-# Externí programy (git, gh, wsl) kontrolujeme přes $LASTEXITCODE.
+# Externí programy (git, wsl) kontrolujeme přes $LASTEXITCODE.
 
 # Funkce obalí Git, aby neúspěšný externí příkaz nezůstal bez povšimnutí.
 function Invoke-Git {
@@ -120,14 +120,12 @@ try {
 
     # 4. VOLITELNÉ STAŽENÍ PROJEKTU Z GITHUBU
     Write-Host "`n4. Stažení projektu"
-    # Přihlášení proveď předem v PowerShellu (ne v Debianu):
-    # gh auth login --hostname github.com --git-protocol https --web
-    # gh auth status
+    # Veřejný repozitář stáhneme přes HTTPS bez účtu a bez GitHub CLI.
+    # Soukromý repozitář vyžaduje přihlášení a oprávnění.
     $odpoved = Read-Host 'Stáhnout AntoninMicka/ZakladyProgramovani do domácí složky Projekty? (ano/ne)'
     if ($odpoved -eq 'ano') {
-        if (!(Get-Command gh -ErrorAction SilentlyContinue) -or
-            !(Get-Command git -ErrorAction SilentlyContinue)) {
-            throw 'Pro klonování nainstaluj Git i GitHub CLI ve Windows.'
+        if (!(Get-Command git -ErrorAction SilentlyContinue)) {
+            throw 'Pro klonování nainstaluj Git ve Windows.'
         }
         $projekty = Join-Path $HOME 'Projekty'
         New-Item -ItemType Directory -Path $projekty -Force | Out-Null
@@ -135,15 +133,14 @@ try {
         if (Test-Path -LiteralPath 'ZakladyProgramovani') {
             Write-Host 'Cesta ZakladyProgramovani již existuje; klonování přeskočeno.'
         } else {
-            gh repo clone AntoninMicka/ZakladyProgramovani
-            if ($LASTEXITCODE -ne 0) { throw 'Klonování se nezdařilo. Ověř gh auth status.' }
+            Invoke-Git clone https://github.com/AntoninMicka/ZakladyProgramovani.git
         }
         if (Test-Path -LiteralPath 'ZakladyProgramovani/.git' -PathType Container) {
             Invoke-Git -C ZakladyProgramovani status
             Invoke-Git -C ZakladyProgramovani remote -v
         }
     } else {
-        Write-Host 'Klonování přeskočeno. Později použij gh repo clone AntoninMicka/ZakladyProgramovani.'
+        Write-Host 'Klonování přeskočeno. Později použij git clone https://github.com/AntoninMicka/ZakladyProgramovani.git.'
     }
 } finally {
     Pop-Location

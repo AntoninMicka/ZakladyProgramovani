@@ -114,28 +114,21 @@ git status --short          # Prázdný výpis znamená čistý pracovní adres�
 # git push -u origin moje-uprava
 #                           # Odešle větev, vyžaduje oprávnění na GitHubu.
 
-# 4. GITHUB CLI A STAŽENÍ REPOZITÁŘE
+# 4. STAŽENÍ VEŘEJNÉHO REPOZITÁŘE BEZ ÚČTU
 printf '\n4. Stažení AntoninMicka/ZakladyProgramovani\n'
-# gh je GitHub CLI, odlišný nástroj od samotného Gitu.
-# Pokud gh chybí, nainstaluj v Debianu: sudo apt install gh
-# Před stažením se přihlas (tento skript přihlášení sám nespouští):
-# gh auth login --hostname github.com --git-protocol https --web
-# gh auth status
+# Veřejný repozitář lze přes HTTPS stáhnout bez účtu a bez GitHub CLI.
+# Soukromý repozitář vyžaduje přihlášení a oprávnění.
 
 printf 'Stáhnout projekt do ~/Projekty/ZakladyProgramovani? (ano/ne): '
 odpoved=''
 IFS= read -r odpoved || true
 if [[ "$odpoved" == 'ano' ]]; then
-    if ! command -v gh >/dev/null 2>&1; then
-        printf 'Chybí GitHub CLI. Spusť: sudo apt install gh\n' >&2
-        exit 1
-    fi
     mkdir -p "$HOME/Projekty"
     cd "$HOME/Projekty"
     if [[ -e ZakladyProgramovani || -L ZakladyProgramovani ]]; then
         printf 'Cesta ZakladyProgramovani již existuje; klonování přeskočeno.\n'
     else
-        gh repo clone AntoninMicka/ZakladyProgramovani
+        git clone https://github.com/AntoninMicka/ZakladyProgramovani.git
     fi
 
     # -C spustí Git v dané složce bez nutnosti dalšího cd.
@@ -146,7 +139,7 @@ if [[ "$odpoved" == 'ano' ]]; then
 else
     printf 'Klonování přeskočeno. Později můžeš ručně zadat:\n'
     printf 'mkdir -p ~/Projekty\ncd ~/Projekty\n'
-    printf 'gh repo clone AntoninMicka/ZakladyProgramovani\n'
+    printf 'git clone https://github.com/AntoninMicka/ZakladyProgramovani.git\n'
 fi
 
 # Po stažení lze v konzoli zadat:
