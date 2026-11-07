@@ -6,7 +6,6 @@
  * Překlad: gcc -std=c17 -Wall -Wextra -Wpedantic ukol_soubory.c -o ukol_soubory
  * Spuštění: ./ukol_soubory (z adresáře s vstup.txt).
  * POZOR: spuštění vytvoří nebo přepíše oba výstupy!
- * Do doplnění úkolu zůstanou oba výstupy prázdné.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,10 +58,19 @@ int main(void) {
             break;
         }
 
-        // TODO: pomocí if a cislo % 2 rozhodni, do kterého souboru zapsat.
-        // Nápověda: fprintf(sude, "%ld\n", cislo); obdobně pro liche.
+        // Zapisujeme postupně, takže zachováme pořadí i opakování čísel.
+        int zapsano;
+        if (cislo % 2 == 0) {
+            zapsano = fprintf(sude, "%ld\n", cislo);
+        } else {
+            zapsano = fprintf(liche, "%ld\n", cislo);
+        }
         // Záporná návratová hodnota fprintf znamená chybu zápisu.
-        (void)cislo;  // Až proměnnou použiješ, tento řádek můžeš odstranit.
+        if (zapsano < 0) {
+            perror("Chyba zápisu čísla");
+            chyba = 1;
+            break;
+        }
     }
     if (ferror(vstup)) {
         perror("Chyba čtení vstupu");
@@ -74,6 +82,6 @@ int main(void) {
     if (fclose(liche) != 0) { perror("Chyba zavření liche.txt"); chyba = 1; }
     if (chyba) return 1;
     printf("Načteno %zu řádků ze souboru vstup.txt.\n", pocet_radku);
-    puts("Soubory sude.txt a liche.txt byly vytvořeny. Doplň jejich naplnění.");
+    puts("Sudá čísla byla zapsána do sude.txt a lichá do liche.txt.");
     return 0;
 }

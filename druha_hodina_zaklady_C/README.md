@@ -3,7 +3,7 @@
 Převod Python materiálů ze složky `prvni_hodina` do standardního **C17**:
 
 - `zaklady_c.c` odpovídá `zaklady_pythonu.py`: devět témat, české komentáře a pokusy.
-- `ukol_soubory.c` odpovídá `ukol_soubory.py`: spustitelná kostra úkolu, kterou má žák doplnit.
+- `ukol_soubory.c` odpovídá `ukol_soubory.py`: řešení rozdělení čísel do souborů podle parity.
 - `vstup.txt` obsahuje stejných 20 čísel jako původní soubor.
 
 Původní soubory zůstávají zachované. Bash, PowerShell a instalační text nejsou
@@ -37,8 +37,7 @@ Výstupy `sude.txt` a `liche.txt` se při každém spuštění přepisují.
 
 ## Kontrola úkolu
 
-Dokud nedoplníš TODO, program pouze načte a ověří čísla a vytvoří prázdné výstupy.
-Po doplnění musí platit:
+Program načte a ověří čísla a rozdělí je do výstupních souborů. Musí platit:
 
 - V `sude.txt` jsou jen sudá čísla, včetně nuly.
 - V `liche.txt` jsou jen lichá čísla.

@@ -23,7 +23,6 @@ Kontrola řešení:
   bude sude.txt obsahovat 8 a 0; liche.txt bude obsahovat 3 a -5.
 
 POZOR: Spuštění vytvoří výstupní soubory, případně přepíše jejich obsah.
-Dokud nedoplníš řešení, budou oba výstupní soubory prázdné.
 """
 
 from pathlib import Path
@@ -41,13 +40,13 @@ with open(adresar / "vstup.txt", "r", encoding="utf-8") as vstup:
 # Otevíráme výstupy až po úspěšném načtení vstupního souboru.
 with open(adresar / "sude.txt", "w", encoding="utf-8") as sude:
     with open(adresar / "liche.txt", "w", encoding="utf-8") as liche:
-        # TODO: Doplň zpracování čísel a zápis do obou otevřených souborů.
-        # Nápovědy:
-        # obsah.splitlines() rozdělí text na jednotlivé řádky.
-        # int(radek) převede text řádku na celé číslo.
-        # cislo % 2 vrací zbytek po dělení dvěma.
-        # soubor.write(f"{cislo}\n") zapíše číslo a ukončení řádku.
-        pass  # Prázdný blok; při doplňování řešení tento řádek nahraď.
+        # Procházíme řádky postupně, takže zachováme pořadí i opakování.
+        for radek in obsah.splitlines():
+            cislo = int(radek)  # Převede text řádku na celé číslo.
+            if cislo % 2 == 0:  # Sudá jsou i nula a záporné násobky dvou.
+                sude.write(f"{cislo}\n")
+            else:
+                liche.write(f"{cislo}\n")
 
 print(f"Načteno {len(obsah.splitlines())} řádků ze souboru vstup.txt.")
-print("Soubory sude.txt a liche.txt byly vytvořeny. Doplň jejich naplnění.")
+print("Sudá čísla byla zapsána do sude.txt a lichá do liche.txt.")
