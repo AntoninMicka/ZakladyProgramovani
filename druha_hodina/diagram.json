@@ -3,9 +3,179 @@
   "author": "Zaklady programovani",
   "editor": "wokwi",
   "parts": [
-    { "type": "wokwi-arduino-uno", "id": "uno", "top": 0, "left": 0, "attrs": {} }
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -100,
+      "left": 300,
+      "attrs": {
+        "value": "0"
+      }
+    },
+    {
+      "type": "wokwi-a4988",
+      "id": "driver1",
+      "top": 80,
+      "left": 360,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "motor1",
+      "top": -170,
+      "left": 540,
+      "attrs": {
+        "size": "17",
+        "arrow": "orange",
+        "display": "angle",
+        "gearRatio": "1:1"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "clock12",
+      "top": -205,
+      "left": 592,
+      "attrs": {
+        "text": "12 h / 0 V"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "clock3",
+      "top": -110,
+      "left": 720,
+      "attrs": {
+        "text": "3 h / 2.5 V"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "clock6",
+      "top": 50,
+      "left": 592,
+      "attrs": {
+        "text": "6 h / 5 V"
+      }
+    }
   ],
-  "connections": [],
+  "connections": [
+    [
+      "pot1:VCC",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "pot1:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "pot1:SIG",
+      "uno:A0",
+      "green",
+      []
+    ],
+    [
+      "uno:2",
+      "driver1:STEP",
+      "blue",
+      []
+    ],
+    [
+      "uno:3",
+      "driver1:DIR",
+      "purple",
+      []
+    ],
+    [
+      "uno:5V",
+      "driver1:VDD",
+      "red",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:GND.1",
+      "black",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:GND.2",
+      "black",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:ENABLE",
+      "black",
+      []
+    ],
+    [
+      "uno:5V",
+      "driver1:RESET",
+      "red",
+      []
+    ],
+    [
+      "uno:5V",
+      "driver1:SLEEP",
+      "red",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:MS1",
+      "black",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:MS2",
+      "black",
+      []
+    ],
+    [
+      "uno:GND.2",
+      "driver1:MS3",
+      "black",
+      []
+    ],
+    [
+      "driver1:1B",
+      "motor1:B-",
+      "blue",
+      []
+    ],
+    [
+      "driver1:1A",
+      "motor1:B+",
+      "green",
+      []
+    ],
+    [
+      "driver1:2A",
+      "motor1:A+",
+      "orange",
+      []
+    ],
+    [
+      "driver1:2B",
+      "motor1:A-",
+      "purple",
+      []
+    ]
+  ],
   "serialMonitor": {
     "display": "always",
     "newline": "lf",

@@ -1,0 +1,333 @@
+{
+  "version": 1,
+  "author": "Zaklady programovani",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-uno",
+      "id": "uno",
+      "top": 170,
+      "left": 220,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-mpu6050",
+      "id": "imu",
+      "top": 0,
+      "left": 280,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-analog-joystick",
+      "id": "joy",
+      "top": 180,
+      "left": -80,
+      "attrs": {
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "throttle",
+      "top": 370,
+      "left": -60,
+      "attrs": {
+        "value": "0"
+      }
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "arm",
+      "top": 450,
+      "left": 180,
+      "attrs": {
+        "value": "",
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "alarm",
+      "top": 450,
+      "left": 330,
+      "attrs": {
+        "volume": "0.1"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "m1",
+      "top": -150,
+      "left": -40,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "label1",
+      "top": -190,
+      "left": -40,
+      "attrs": {
+        "text": "M1 - predni levy / CCW"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "m2",
+      "top": -150,
+      "left": 600,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "label2",
+      "top": -190,
+      "left": 600,
+      "attrs": {
+        "text": "M2 - predni pravy / CW"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "m3",
+      "top": 400,
+      "left": 600,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "label3",
+      "top": 360,
+      "left": 600,
+      "attrs": {
+        "text": "M3 - zadni pravy / CCW"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "m4",
+      "top": 400,
+      "left": -250,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "label4",
+      "top": 360,
+      "left": -250,
+      "attrs": {
+        "text": "M4 - zadni levy / CW"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "front",
+      "top": -220,
+      "left": 240,
+      "attrs": {
+        "text": "PREDEK - X konfigurace"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "legend",
+      "top": -90,
+      "left": 240,
+      "attrs": {
+        "text": "Servo = ukazatel vystupu ESC\n1000 us STOP, 2000 us maximum"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "thlabel",
+      "top": 340,
+      "left": -65,
+      "attrs": {
+        "text": "PLYN: zacni na nule"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "armlabel",
+      "top": 485,
+      "left": 150,
+      "attrs": {
+        "text": "vlevo DISARM / vpravo ARM"
+      }
+    }
+  ],
+  "connections": [
+    [
+      "imu:VCC",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "imu:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "joy:VCC",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "joy:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "throttle:VCC",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "throttle:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "imu:SDA",
+      "uno:A4",
+      "green",
+      []
+    ],
+    [
+      "imu:SCL",
+      "uno:A5",
+      "blue",
+      []
+    ],
+    [
+      "imu:AD0",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "joy:HORZ",
+      "uno:A0",
+      "green",
+      []
+    ],
+    [
+      "joy:VERT",
+      "uno:A1",
+      "blue",
+      []
+    ],
+    [
+      "throttle:SIG",
+      "uno:A2",
+      "orange",
+      []
+    ],
+    [
+      "arm:2",
+      "uno:2",
+      "purple",
+      []
+    ],
+    [
+      "arm:3",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "alarm:1",
+      "uno:4",
+      "orange",
+      []
+    ],
+    [
+      "alarm:2",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "m1:PWM",
+      "uno:5",
+      "green",
+      []
+    ],
+    [
+      "m1:V+",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "m1:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "m2:PWM",
+      "uno:6",
+      "green",
+      []
+    ],
+    [
+      "m2:V+",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "m2:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "m3:PWM",
+      "uno:9",
+      "green",
+      []
+    ],
+    [
+      "m3:V+",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "m3:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ],
+    [
+      "m4:PWM",
+      "uno:10",
+      "green",
+      []
+    ],
+    [
+      "m4:V+",
+      "uno:5V",
+      "red",
+      []
+    ],
+    [
+      "m4:GND",
+      "uno:GND.1",
+      "black",
+      []
+    ]
+  ],
+  "serialMonitor": {
+    "display": "always",
+    "newline": "lf",
+    "collapse": false
+  }
+}
