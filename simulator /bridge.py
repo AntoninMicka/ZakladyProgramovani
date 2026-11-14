@@ -32,7 +32,8 @@ class RFC2217Bridge(Bridge):
     def __init__(self, engine, url, baudrate=115200):
         super().__init__(engine)
         import serial
-        self.port = serial.serial_for_url(url, baudrate=baudrate, timeout=0.05, write_timeout=0.2)
+        # pySerial's RFC2217 backend does not implement write_timeout.
+        self.port = serial.serial_for_url(url, baudrate=baudrate, timeout=0.05)
         self.stop_event = threading.Event()
         self.reader = threading.Thread(target=self._read_loop, name='wokwi-reader', daemon=True)
 
