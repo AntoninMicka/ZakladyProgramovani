@@ -35,6 +35,8 @@ regulátor požadovaných otáček zatím není hotový — je studentským úko
 ## Ovládání okna ECU
 
 - **Motor:** pedál, zátěž, pauza a rychlost zobrazení/simulace.
+- **Schéma motoru:** průhledový řez se snímači, vstřikovači, cívkami a ECU.
+  Kliknutím zobrazíš úlohu dílu a živé hodnoty; SVG lze přiblížit a uložit.
 - **Telemetrie:** aktuální hodnoty a historie s možností exportu.
 - **Editor ECU:** otevři `firmware/include/ecu_controller.h`, najdi označenou
   `update_control(now)`, uprav ji a zvol **Použít v simulaci**.

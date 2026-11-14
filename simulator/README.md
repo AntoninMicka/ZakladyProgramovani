@@ -196,6 +196,36 @@ Pauza a změna rychlosti modelu nepozastaví hodiny Wokwi. Pro živou smyčku po
 skutečnými lokálními testovacími procesy; potvrzení konkrétního ESP32/Custom Chip
 projektu ve Wokwi stále vyžaduje [runtime ověření](wokwi/hardware/VERIFICATION.md).
 
+## Průhledové SVG schéma motoru
+
+Záložka **Schéma motoru** zobrazuje průhledový řez ilustračním řadovým čtyřválcem:
+ventily, písty, ojnice a klikový hřídel. Modře jsou snímače **CKP, CMP, MAP, TPS,
+IAT, CLT a lambda**, oranžově **vstřikovače a zapalovací cívky se svíčkami**,
+fialově **ECU**. Šipky rozlišují vstupy do ECU a povely k akčním členům.
+Zakreslený je také pedál a mechanická zátěž.
+
+![SVG schéma v simulátoru](docs/engine-diagram-preview.png)
+
+Klikni na označenou součást. Boční panel vysvětlí její úlohu a ukáže dostupné
+živé hodnoty: úrovně CKP/CMP, tlak, teploty, pedál, lambdu nebo poslední délku
+vstřiku a nabíjení cívky. U ECU ukáže v Mock také její vlastní měřené otáčky,
+požadovanou dávku a případný studentský cíl. Nedostupné údaje Wokwi si nedopočítává.
+Aktivní vstřikovače a nabíjené cívky se zvýrazňují; krátké pulzy mohou celé proběhnout
+mezi dvěma obnoveními. Pro měření zůstává telemetrie/VCD.
+
+Obrázek se automaticky přizpůsobí místu. Přiblížení **50–200 %** a posuvníky
+umožní prohlédnout detaily. **Uložit SVG…** exportuje samostatný statický vektorový
+soubor s průhledným pozadím; **Otevřít SVG** ho otevře v systémovém prohlížeči.
+Původní soubor je [assets/engine-cutaway.svg](assets/engine-cutaway.svg).
+Zobrazení používá vektory Tk Canvas ze základních tvarů stejného SVG a nepotřebuje
+žádnou další Python knihovnu.
+
+Řez je přehledový a statický, nikoli konstrukční výkres nebo druhá časová animace.
+Živá animace je v záložce Motor. Schéma zůstává čtyřválcové i při jiném počtu válců
+aktivního modelu; panel tento rozdíl označí. TPS v této výukové aplikaci přenáší
+pedál. Samostatný snímač APP ani elektrický pohon škrticí klapky nejsou simulované.
+Zobrazení nepředstavuje ověření fyzického motoru či virtuálních pinů Wokwi.
+
 ## Výpisy telemetrie
 
 ![Živý výpis telemetrie](docs/telemetry-preview.png)

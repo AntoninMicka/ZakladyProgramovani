@@ -1,7 +1,7 @@
 # Evidence a akceptace druhé fáze
 
-Ověření 14. 11. 2026: všech 65 Python testů včetně skutečného TCP testu, geometrie vizualizace
-a šesti skutečných Tk GUI testů prošlo;
+Ověření 14. 11. 2026: všech 69 Python testů včetně skutečného TCP testu, geometrie vizualizace
+a sedmi skutečných Tk GUI testů prošlo;
 prošel také samostatný C host test. Implementace je připravena pro lokální SIL a pro integrační
 ověření s Wokwi. Celá fáze **není zatím akceptována**, protože chybí skutečný běh
 s demonstračním MCU a měření na virtuálních pinech.
@@ -13,6 +13,7 @@ s demonstračním MCU a měření na virtuálních pinech.
 | Editor ECU | Tk test editace, uložení, chyby překladu bez přerušení starého procesu a úspěšné aplikace s novým PID a revizí | ověřeno s testovacím CLI |
 | Správa Wokwi CLI v GUI | skutečné okno, ověření instalovaného CLI; testovací procesy pro scénář, živý přenos, zastavení a maskování tokenu | ověřeno lokálně; bez runtime ESP32 |
 | Výpis telemetrie | formátování, omezení historie, nezávislé snímky, skutečný Tk panel a export JSONL/TXT | ověřeno lokálně |
+| SVG schéma motoru | průhledné SVG, základní tvary vykreslené přímo jako Tk vektory, výběr dílu, živé údaje, zoom a export | ověřeno v Tk; statický ilustrační čtyřválec |
 | Živá vizualizace | skutečný běh Tk okna, ovládání plynu/zátěže/pauzy/rychlosti a 16 válců | ověřeno lokálně |
 | Model, virtuální hodiny, samostatné vlákno | Python testy + skutečný CLI Mock | ověřeno lokálně |
 | Úhel, 60-2, CMP 720°, změny RPM | deterministické virtuální testy | ověřeno lokálně |

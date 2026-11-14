@@ -10,6 +10,7 @@ from telemetry import TelemetryBuffer
 from visualization import cylinder_phase, piston_position
 from wokwi_gui import WokwiPanel
 from ecu_editor import EcuEditor
+from engine_diagram import EngineDiagram
 
 BG = "#0f172a"
 PANEL = "#1e293b"
@@ -104,6 +105,9 @@ class EngineView:
         self.ecu_editor = EcuEditor(
             editor_page, self.wokwi_panel, lambda: notebook.select(wokwi_page)
         )
+        self.diagram_page = ttk.Frame(notebook, padding=10)
+        notebook.add(self.diagram_page, text="Schéma motoru")
+        self.engine_diagram = EngineDiagram(self.diagram_page, app)
         scrollbar = ttk.Scrollbar(body, orient="vertical")
         scrollbar.pack(side="right", fill="y")
         self.canvas = tk.Canvas(body, bg=BG, highlightthickness=0, yscrollcommand=scrollbar.set)
@@ -329,6 +333,8 @@ class EngineView:
             if self.speed.get() != current_speed:
                 self.speed.set(current_speed)
             self.update_telemetry(frame, diagnostics)
+            if self.notebook.select() == str(self.diagram_page):
+                self.engine_diagram.refresh(frame, diagnostics)
             link = (
                 "MOCK · bez Wokwi"
                 if self.app.mode == "mock"
