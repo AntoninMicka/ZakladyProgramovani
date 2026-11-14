@@ -9,7 +9,7 @@ scénář. Skutečný Wokwi běh chybí kvůli `Missing WOKWI_CLI_TOKEN environm
 
 | Kontrola | Výsledek | Co prokazuje |
 | --- | --- | --- |
-| Hardware testy Python/C/C++ | 15 testů prošlo | následující nativní scénáře |
+| Hardware testy Python/C/C++ | 17 testů prošlo | následující nativní scénáře |
 | UART 2 Mbaud | nativně 2000/7500 RPM: 37,1/54,9 %, peak TX 3, žádné ztráty | délky skutečně serializovaných rámců, 10 bitů/bajt, 10 s na scénář |
 | C core – 8 scénářů | prošlo | 60-2, 720° CMP, RPM změny, stop/restart, analog, pulzy, polarity/poruchy, omezení front |
 | Buffered doručení | prošlo | stejné GPIO termíny při různě časném doručení stavu před apply time |
@@ -20,6 +20,7 @@ scénář. Skutečný Wokwi běh chybí kvůli `Missing WOKWI_CLI_TOKEN environm
 | Reset a výpadek | prošlo nativně | explicitní abort/timeout, změna relace, staré události, watchdog, výstupy ECU OFF |
 | ESP32 firmware | build BIN/ELF prošel | sestavitelnost, nikoli skutečný běh |
 | Mega profil | build HEX/ELF prošel | přenositelnost vrstvy GPIO/timeru; ne časová výkonnost AVR |
+| Vstupní a výkonový blok | nativní testy hran CKP/CMP, 5 ADC cest, 8 driverů a POWER_EN prošly | funkční hranice kabeláže/driverů, bez elektrického modelu zátěží |
 | Custom Chip | build WASM prošel | ABI a sestavitelnost všech čtyř C modulů |
 | Wokwi lint | bez chyb | známé piny, součástky, topologie souboru |
 | Runtime Wokwi | neproveden | chybí CLI token; žádný skutečný VCD ani MCU/ADC výsledek |
@@ -141,3 +142,13 @@ Pokud přímý UART prototyp neprojde, další implementaci topologie zastavit a
 oddělený backend z [protokolové dokumentace](protocol/README.md). Nevracet simulační
 protokol do produkčního firmware a neoznačovat fázi za přijatou pouze na základě
 výměny telemetrického JSON.
+
+## Rozšířené schéma ECU
+
+Diagram nyní odděluje vstupy snímačů, MCU, drivery a aktivitu osmi zátěží.
+Přepínač hlavního relé hradluje aktivitu za drivery. VCD rozlišuje povel a zátěž.
+Nové `sensor-front-end` a `output-stage` WASM sestavené CLI 0.29.1; lint bez chyb
+či varování (zůstává informační `unsupported-part` pro desku ESP32).
+17 hardware testů včetně nativního testu skutečných zdrojů obou chipů prošlo.
+Logické bloky nejsou fyzikální simulací MOSFET, IGBT ani analogové ochrany vstupů.
+Skutečný běh nového schématu v MCU/Wokwi zůstává otevřený.

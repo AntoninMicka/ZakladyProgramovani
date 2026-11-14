@@ -94,5 +94,5 @@ ESP32/AVR a virtuálních pinů ve Wokwi; ten zůstává otevřený dle
 
 Mock nyní vykonává stejný `ecu_controller.h` jako firmware, přes nativní C++ adaptér.
 Podrobnosti, závislosti a použití editoru pro Mock popisuje hlavní README.
-Aktuální sada aplikace má 61 testů (včetně šesti Tk testů), hardware sada 15.
+Aktuální sada aplikace má 61 testů (včetně šesti Tk testů), hardware sada 17 po doplnění modelů vstupů a výkonových výstupů.
 Původní Python regulace dávky v Mock byla odstraněna; společná demo ECU má pevnou dávku.

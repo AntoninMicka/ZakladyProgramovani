@@ -38,11 +38,19 @@ def main():
         cwd=ROOT / "chips/engine-interface",
         check=True,
     )
+    for name in ("sensor-front-end", "output-stage"):
+        subprocess.run(
+            [args.wokwi_cli, "chip", "compile", name + ".chip.c", "-o", name + ".chip.wasm"],
+            cwd=ROOT / "chips" / name,
+            check=True,
+        )
     subprocess.run([args.wokwi_cli, "lint", str(ROOT)], check=True)
     for path in (
         ROOT / f".pio/build/{args.target}/firmware.elf",
         ROOT / f".pio/build/{args.target}/firmware.{'bin' if args.target == 'esp32' else 'hex'}",
         ROOT / "chips/engine-interface/engine-interface.chip.wasm",
+        ROOT / "chips/sensor-front-end/sensor-front-end.chip.wasm",
+        ROOT / "chips/output-stage/output-stage.chip.wasm",
     ):
         if not path.is_file() or not path.stat().st_size:
             raise RuntimeError("Missing artifact " + str(path))

@@ -4,6 +4,20 @@
   "editor": "wokwi",
   "parts": [
     {
+      "type": "chip-engine-interface",
+      "id": "engine",
+      "left": -1000,
+      "top": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-sensor-front-end",
+      "id": "inputs",
+      "left": -500,
+      "top": 0,
+      "attrs": {}
+    },
+    {
       "type": "board-esp32-devkit-c-v4",
       "id": "ecu",
       "left": 0,
@@ -11,33 +25,280 @@
       "attrs": {}
     },
     {
-      "type": "chip-engine-interface",
-      "id": "engine",
-      "left": 500,
+      "type": "chip-output-stage",
+      "id": "drivers",
+      "left": 550,
       "top": 0,
       "attrs": {}
     },
     {
       "type": "wokwi-logic-analyzer",
       "id": "logic",
-      "left": 500,
-      "top": -220,
+      "left": 0,
+      "top": -450,
       "attrs": {}
+    },
+    {
+      "type": "wokwi-slide-switch",
+      "id": "main_relay",
+      "left": 550,
+      "top": -180,
+      "attrs": {
+        "bounce": "0"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "title",
+      "left": -1000,
+      "top": -600,
+      "attrs": {
+        "text": "ECU / 4 valcu, ctyrtakt - signalove schema"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "power_note",
+      "left": -1000,
+      "top": -550,
+      "attrs": {
+        "text": "V aute: baterie 12 V -> pojistka -> hlavni rele -> zateze / regulator ECU\nZde: cervena sit = logicke napajeni MCU; POWER_EN = model napajeni zatezi, nikoli 12 V."
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "motor_label",
+      "left": -1100,
+      "top": -120,
+      "attrs": {
+        "text": "MOTOR / MODEL\nCKP 60-2, CMP, MAP, TPS, IAT, CLT, lambda\nUART do Pythonu patri simulatoru, ne ECU"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "inputs_label",
+      "left": -500,
+      "top": -100,
+      "attrs": {
+        "text": "KABELAZ / VSTUPY ECU\nCKP/CMP uz po tvarovani\nanalogove signaly uz v rozsahu ADC"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "ecu_label",
+      "left": 0,
+      "top": -100,
+      "attrs": {
+        "text": "ECU - mikroprocesor\nCKP/CMP -> casovani -> INJ/IGN\nUART TX = pouze diagnostika"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "driver_label",
+      "left": 550,
+      "top": -100,
+      "attrs": {
+        "text": "VYKONOVE VYSTUPY\nINJ: low-side MOSFET + ochrana\nIGN: IGBT / chytra civka + omezeni napeti\nZde logicky model driveru a zateze"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "switch_label",
+      "left": 670,
+      "top": -180,
+      "attrs": {
+        "text": "HLAVNI RELE: vlevo ON / vpravo OFF\nOdpoji zateze, ECU a snimace bezi dal"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "loads_label",
+      "left": 1150,
+      "top": -100,
+      "attrs": {
+        "text": "INDIKACE ZATEZI\nzelena = vstrik otevren\nzluta = civka se nabiji; zhasnuti = konec nabijeni"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "inj1",
+      "left": 1200,
+      "top": 0,
+      "attrs": {
+        "color": "green",
+        "label": "INJ1",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_inj1",
+      "left": 1100,
+      "top": 30,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "inj2",
+      "left": 1200,
+      "top": 125,
+      "attrs": {
+        "color": "green",
+        "label": "INJ2",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_inj2",
+      "left": 1100,
+      "top": 155,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "inj3",
+      "left": 1200,
+      "top": 250,
+      "attrs": {
+        "color": "green",
+        "label": "INJ3",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_inj3",
+      "left": 1100,
+      "top": 280,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "inj4",
+      "left": 1200,
+      "top": 375,
+      "attrs": {
+        "color": "green",
+        "label": "INJ4",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_inj4",
+      "left": 1100,
+      "top": 405,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ign1",
+      "left": 1200,
+      "top": 520,
+      "attrs": {
+        "color": "yellow",
+        "label": "IGN1",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_ign1",
+      "left": 1100,
+      "top": 550,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ign2",
+      "left": 1200,
+      "top": 645,
+      "attrs": {
+        "color": "yellow",
+        "label": "IGN2",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_ign2",
+      "left": 1100,
+      "top": 675,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ign3",
+      "left": 1200,
+      "top": 770,
+      "attrs": {
+        "color": "yellow",
+        "label": "IGN3",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_ign3",
+      "left": 1100,
+      "top": 800,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ign4",
+      "left": 1200,
+      "top": 895,
+      "attrs": {
+        "color": "yellow",
+        "label": "IGN4",
+        "fps": "80"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_ign4",
+      "left": 1100,
+      "top": 925,
+      "attrs": {
+        "value": "1000"
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "logic_label",
+      "left": 230,
+      "top": -450,
+      "attrs": {
+        "text": "LOGIC ANALYZER\nD0 CKP / D1 CMP / D2 INJ1 zatez / D3 IGN1 zatez\nD4 INJ1 povel / D5 IGN1 povel / D6 napajeni zatezi\nLED zprumeruje kratke pulzy; sirky merime ve VCD."
+      }
+    },
+    {
+      "type": "wokwi-text",
+      "id": "grounds_label",
+      "left": -500,
+      "top": 850,
+      "attrs": {
+        "text": "GND snimacu (SGND) a vykonova zem (PGND) maji v tomto modelu spolecny bod u ECU.\nModel nepocita proudy, otepleni, ruseni, zpetne napeti ani skutecnou jiskru."
+      }
     }
   ],
   "connections": [
-    [
-      "$serialMonitor:TX",
-      "engine:RX",
-      "green",
-      []
-    ],
-    [
-      "engine:TX",
-      "$serialMonitor:RX",
-      "green",
-      []
-    ],
     [
       "ecu:3V3",
       "engine:VCC",
@@ -51,129 +312,435 @@
       []
     ],
     [
+      "ecu:3V3",
+      "inputs:VCC",
+      "red",
+      []
+    ],
+    [
+      "ecu:GND.1",
+      "inputs:GND",
+      "black",
+      []
+    ],
+    [
+      "ecu:3V3",
+      "drivers:VCC",
+      "red",
+      []
+    ],
+    [
+      "ecu:GND.1",
+      "drivers:PGND",
+      "black",
+      []
+    ],
+    [
+      "ecu:GND.1",
+      "logic:GND",
+      "black",
+      []
+    ],
+    [
+      "ecu:GND.1",
+      "main_relay:3",
+      "black",
+      []
+    ],
+    [
+      "ecu:3V3",
+      "main_relay:1",
+      "red",
+      []
+    ],
+    [
+      "main_relay:2",
+      "drivers:POWER_EN",
+      "red",
+      []
+    ],
+    [
+      "$serialMonitor:TX",
+      "engine:RX",
+      "gray",
+      []
+    ],
+    [
+      "engine:TX",
+      "$serialMonitor:RX",
+      "gray",
+      []
+    ],
+    [
       "ecu:TX",
       "engine:DIAG_RX",
       "gray",
       []
     ],
     [
-      "ecu:27",
       "engine:CKP",
+      "inputs:CKP_IN",
       "blue",
       []
     ],
     [
-      "ecu:26",
+      "inputs:CKP_OUT",
+      "ecu:27",
+      "blue",
+      []
+    ],
+    [
       "engine:CMP",
+      "inputs:CMP_IN",
+      "purple",
+      []
+    ],
+    [
+      "inputs:CMP_OUT",
+      "ecu:26",
       "purple",
       []
     ],
     [
       "engine:MAP",
+      "inputs:MAP_IN",
+      "orange",
+      []
+    ],
+    [
+      "inputs:MAP_OUT",
       "ecu:32",
       "orange",
       []
     ],
     [
       "engine:TPS",
+      "inputs:TPS_IN",
+      "orange",
+      []
+    ],
+    [
+      "inputs:TPS_OUT",
       "ecu:33",
       "orange",
       []
     ],
     [
       "engine:IAT",
+      "inputs:IAT_IN",
+      "orange",
+      []
+    ],
+    [
+      "inputs:IAT_OUT",
       "ecu:34",
       "orange",
       []
     ],
     [
       "engine:CLT",
+      "inputs:CLT_IN",
+      "orange",
+      []
+    ],
+    [
+      "inputs:CLT_OUT",
       "ecu:35",
       "orange",
       []
     ],
     [
       "engine:LAMBDA",
+      "inputs:LAMBDA_IN",
+      "orange",
+      []
+    ],
+    [
+      "inputs:LAMBDA_OUT",
       "ecu:VP",
       "orange",
       []
     ],
     [
       "ecu:16",
+      "drivers:INJ1_CTRL",
+      "green",
+      []
+    ],
+    [
+      "drivers:INJ1_LOAD",
       "engine:INJ1",
       "green",
       []
     ],
     [
-      "ecu:21",
-      "engine:IGN1",
-      "magenta",
+      "drivers:INJ1_LOAD",
+      "r_inj1:1",
+      "green",
+      []
+    ],
+    [
+      "r_inj1:2",
+      "inj1:A",
+      "green",
+      []
+    ],
+    [
+      "inj1:C",
+      "ecu:GND.1",
+      "black",
       []
     ],
     [
       "ecu:17",
+      "drivers:INJ2_CTRL",
+      "green",
+      []
+    ],
+    [
+      "drivers:INJ2_LOAD",
       "engine:INJ2",
       "green",
       []
     ],
     [
-      "ecu:22",
-      "engine:IGN2",
-      "magenta",
+      "drivers:INJ2_LOAD",
+      "r_inj2:1",
+      "green",
+      []
+    ],
+    [
+      "r_inj2:2",
+      "inj2:A",
+      "green",
+      []
+    ],
+    [
+      "inj2:C",
+      "ecu:GND.1",
+      "black",
       []
     ],
     [
       "ecu:18",
+      "drivers:INJ3_CTRL",
+      "green",
+      []
+    ],
+    [
+      "drivers:INJ3_LOAD",
       "engine:INJ3",
       "green",
       []
     ],
     [
-      "ecu:23",
-      "engine:IGN3",
-      "magenta",
+      "drivers:INJ3_LOAD",
+      "r_inj3:1",
+      "green",
+      []
+    ],
+    [
+      "r_inj3:2",
+      "inj3:A",
+      "green",
+      []
+    ],
+    [
+      "inj3:C",
+      "ecu:GND.1",
+      "black",
       []
     ],
     [
       "ecu:19",
+      "drivers:INJ4_CTRL",
+      "green",
+      []
+    ],
+    [
+      "drivers:INJ4_LOAD",
       "engine:INJ4",
       "green",
       []
     ],
     [
-      "ecu:25",
-      "engine:IGN4",
-      "magenta",
+      "drivers:INJ4_LOAD",
+      "r_inj4:1",
+      "green",
       []
     ],
     [
-      "engine:CKP",
+      "r_inj4:2",
+      "inj4:A",
+      "green",
+      []
+    ],
+    [
+      "inj4:C",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "ecu:21",
+      "drivers:IGN1_CTRL",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN1_LOAD",
+      "engine:IGN1",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN1_LOAD",
+      "r_ign1:1",
+      "yellow",
+      []
+    ],
+    [
+      "r_ign1:2",
+      "ign1:A",
+      "yellow",
+      []
+    ],
+    [
+      "ign1:C",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "ecu:22",
+      "drivers:IGN2_CTRL",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN2_LOAD",
+      "engine:IGN2",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN2_LOAD",
+      "r_ign2:1",
+      "yellow",
+      []
+    ],
+    [
+      "r_ign2:2",
+      "ign2:A",
+      "yellow",
+      []
+    ],
+    [
+      "ign2:C",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "ecu:23",
+      "drivers:IGN3_CTRL",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN3_LOAD",
+      "engine:IGN3",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN3_LOAD",
+      "r_ign3:1",
+      "yellow",
+      []
+    ],
+    [
+      "r_ign3:2",
+      "ign3:A",
+      "yellow",
+      []
+    ],
+    [
+      "ign3:C",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "ecu:25",
+      "drivers:IGN4_CTRL",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN4_LOAD",
+      "engine:IGN4",
+      "yellow",
+      []
+    ],
+    [
+      "drivers:IGN4_LOAD",
+      "r_ign4:1",
+      "yellow",
+      []
+    ],
+    [
+      "r_ign4:2",
+      "ign4:A",
+      "yellow",
+      []
+    ],
+    [
+      "ign4:C",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "inputs:CKP_OUT",
       "logic:D0",
       "blue",
       []
     ],
     [
-      "engine:CMP",
+      "inputs:CMP_OUT",
       "logic:D1",
       "blue",
       []
     ],
     [
-      "engine:INJ1",
+      "drivers:INJ1_LOAD",
       "logic:D2",
       "blue",
       []
     ],
     [
-      "engine:IGN1",
+      "drivers:IGN1_LOAD",
       "logic:D3",
       "blue",
       []
     ],
     [
-      "logic:GND",
-      "engine:GND",
-      "black",
+      "ecu:16",
+      "logic:D4",
+      "blue",
+      []
+    ],
+    [
+      "ecu:21",
+      "logic:D5",
+      "blue",
+      []
+    ],
+    [
+      "drivers:POWER_EN",
+      "logic:D6",
+      "blue",
       []
     ]
   ],

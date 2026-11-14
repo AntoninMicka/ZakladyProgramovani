@@ -42,6 +42,18 @@ class HardwareTests(unittest.TestCase):
         def run(args):
             subprocess.run([str(a) for a in args], check=True, capture_output=True, text=True)
 
+        cls.peripherals = cls.build / "peripheral-test"
+        run(
+            [
+                *common,
+                "-Wno-unknown-attributes",
+                "-Wno-unused-function",
+                ROOT / "tests/peripheral_test.c",
+                "-lm",
+                "-o",
+                cls.peripherals,
+            ]
+        )
         cls.throughput = cls.build / "throughput-test"
         run(
             [
@@ -285,6 +297,38 @@ class HardwareTests(unittest.TestCase):
         self.assertEqual(config["signals"]["teeth"], 36)
         self.assertEqual(config["signals"]["missing"], 1)
         self.assertIn("inertia", config["engine"])
+
+    def test_sensor_and_output_blocks(self):
+        result = subprocess.run([self.peripherals], check=True, capture_output=True, text=True)
+        self.assertIn("8 drivers, power-off gating", result.stdout)
+
+    def test_diagram_measures_loads_after_drivers_and_switches_power(self):
+        for target in ("esp32", "mega"):
+            configuration = configure.load(
+                ROOT / "config/engine.json", ROOT / "config/pinout.json", target
+            )
+            generated = configure.generate(*configuration)
+            diagram = json.loads(generated["diagram.json"])
+            links = {frozenset(row[:2]) for row in diagram["connections"]}
+            self.assertIn(frozenset(("drivers:INJ1_LOAD", "engine:INJ1")), links)
+            self.assertIn(frozenset(("drivers:IGN1_LOAD", "logic:D3")), links)
+            self.assertIn(frozenset(("drivers:POWER_EN", "logic:D6")), links)
+            self.assertIn(frozenset(("main_relay:2", "drivers:POWER_EN")), links)
+            self.assertIn(frozenset(("inputs:CKP_OUT", "logic:D0")), links)
+            self.assertEqual(sum(part["type"] == "wokwi-led" for part in diagram["parts"]), 8)
+            self.assertEqual(sum(part["type"] == "wokwi-resistor" for part in diagram["parts"]), 8)
+            configuration[0]["capture"]["injector_active_high"] = False
+            low_files = configure.generate(*configuration)
+            self.assertIn("#define OUTPUT_INJ_ACTIVE 0", low_files["config/generated_outputs.h"])
+            low_links = {
+                frozenset(row[:2]) for row in json.loads(low_files["diagram.json"])["connections"]
+            }
+            self.assertIn(frozenset(("inj1:C", "drivers:INJ1_LOAD")), low_links)
+            for row in diagram["connections"]:
+                self.assertFalse(
+                    any(pin.startswith("ecu:") for pin in row[:2])
+                    and any(pin.startswith(("engine:INJ", "engine:IGN")) for pin in row[:2])
+                )
 
     def test_configuration_and_pin_conflicts(self):
         engine = ROOT / "config/engine.json"

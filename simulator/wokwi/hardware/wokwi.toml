@@ -9,3 +9,11 @@ vcdFile = 'capture.vcd'
 [[chip]]
 name = 'engine-interface'
 binary = 'chips/engine-interface/engine-interface.chip.wasm'
+
+[[chip]]
+name = 'sensor-front-end'
+binary = 'chips/sensor-front-end/sensor-front-end.chip.wasm'
+
+[[chip]]
+name = 'output-stage'
+binary = 'chips/output-stage/output-stage.chip.wasm'

@@ -20,8 +20,11 @@ flowchart LR
   P[Python: model + clock] <-->|RFC2217 / JSON + CRC32| S[Serial Monitor pins]
   S <-->|UART| A[Communication adapter · Custom Chip]
   A -->|buffered state queue| H[Engine interface core]
-  H -->|CKP / CMP / analog| ECU[ESP32: ECU firmware]
-  ECU -->|INJ1–4 / IGN1–4| H
+  H -->|CKP / CMP / analog| F[Vstupní blok a kabeláž]
+  F -->|úrovně pro GPIO / ADC| ECU[ESP32: ECU firmware]
+  ECU -->|řídicí povely INJ / IGN| O[Model driverů a zátěží]
+  R[Hlavní relé POWER_EN] --> O
+  O -->|aktivita zátěží LOAD| H
   H -->|timestamped events| A
   ECU -->|diagnostic UART TX| D[DIAG_RX → Chips Console]
 ```
@@ -39,6 +42,64 @@ stavební prvky; jejich přímé propojení přes RFC2217 v této sestavě je za
 **technický prototyp**, nikoli ověřená vlastnost Wokwi. Pokud runtime tento přenos
 neumožní, nepřesouvat protokol do ECU: pokračovat odděleným podporovaným transportem
 (viz [protokol a alternativy](protocol/README.md)).
+
+## Schéma blíže skutečné ECU
+
+Otevřete `wokwi/hardware/wokwi.toml`. Diagram je rozdělen zleva doprava:
+
+1. **Motor a snímače** – Engine Interface napojený na Python, CKP/CMP a pět
+   analogových signálů. Tento simulační adaptér není součást skutečné ECU.
+2. **Kabeláž / vstupy ECU** – samostatný `sensor-front-end`. CKP/CMP předá po
+   hranách; pět analogových napětí obnovuje každých 100 µs. Zobrazuje hranici
+   vstupních obvodů, ale jejich analogové filtrování a ochrany zatím nepočítá.
+3. **Mikroprocesor ECU** – původní ESP32/Mega a nezměněný řídicí firmware.
+4. **Výkonová část a zátěže** – `output-stage` odděluje GPIO povely od aktivity
+   vstřikovačů/cívek. Ve skutečném autě tuto úlohu plní drivery s MOSFET/IGBT
+   nebo elektronika chytrých cívek; GPIO samo výkonovou zátěž nenapájí.
+5. **Osm LED s 1kΩ rezistory** – zelené označují vstřiky INJ1–4, žluté nabíjení
+   cívek IGN1–4. Jsou to indikátory logického modelu, nikoli náhrada elektrického
+   modelu indukčnosti. Zhasnutí IGN odpovídá ukončení nabíjení, nikoli modelu jiskry.
+
+Přepínač **HLAVNÍ RELÉ** je výchozím stavem vlevo **ON**, vpravo **OFF**.
+Vypnutí hned ukončí aktivitu všech zátěží i při aktivním povelu z MCU. Snímače
+ani CPU se tím nezastaví. Při zapnutí během aktivního povelu se zátěž znovu sepne;
+může vzniknout kratší pulz. Stav se zachytí do telemetrie stejně jako ostatní hrany.
+Nejde o model zhasnutí napájení celé ECU ani o startovací klíček.
+
+V obrázku `config/wiring.svg` je také skutečný funkční řetězec napájení:
+baterie 12 V → pojistka/ochrana → hlavní relé → zátěže a regulátory ECU.
+Ve Wokwi jsou červené vodiče **logické napájení desky**, nikoli simulovaných 12 V.
+SGND snímačů a PGND výkonové části mají společný bod u ECU. Obvody nepočítají
+úbytky napětí, proudy, rušení, indukční špičky, magnetické pole ani vysoké napětí
+svíček. Vstup už představuje upravený signál pro MCU: není to syrový VR snímač,
+samotný termistor ani nezpracovaný signál širokopásmové lambda sondy.
+
+### Měřicí body
+
+| Logic Analyzer | Bod | Význam |
+| --- | --- | --- |
+| D0 | CKP za vstupním blokem | co vidí ECU na klice |
+| D1 | CMP za vstupním blokem | co vidí ECU na vačce |
+| D2 | INJ1_LOAD | aktivita prvního vstřikovače za driverem |
+| D3 | IGN1_LOAD | aktivita první cívky za driverem |
+| D4 | INJ1_CTRL | původní povel mikroprocesoru |
+| D5 | IGN1_CTRL | původní povel mikroprocesoru |
+| D6 | POWER_EN | povolené napájení zátěží |
+
+Engine Interface zachytává `LOAD`, takže změří také přerušení pulzu hlavním relé.
+Původní význam D0–D3 zůstává vhodný pro VCD checker. LED jas průměrují v čase;
+šířku pulzu čtěte z VCD, nikoli z délky vizuálního bliknutí.
+
+Diagram, pinmapu, SVG i polaritu driverů nadále generuje `scripts/configure.py`
+z jednoho JSON profilu. `scripts/build.py` nyní sestavuje všechny tři WASM chipy.
+Nativní testy ověřují přenos CKP/CMP, pět ADC cest, osm výstupů a vypnutí zátěží.
+Nové zapojení je sestavené a prošlo lintem; skutečný MCU/Custom Chip runtime ve
+Wokwi je stále samostatný otevřený akceptační krok.
+
+Zdroje k možnostem simulátoru: [omezená analogová simulace](https://docs.wokwi.com/chips-api/analog),
+[definice vlastních chipů](https://docs.wokwi.com/chips-api/chip-json),
+[přepínač](https://docs.wokwi.com/parts/wokwi-slide-switch),
+[LED a průměrování jasu](https://docs.wokwi.com/parts/wokwi-led).
 
 ## Ovládání přes GUI simulátoru
 
@@ -82,6 +143,10 @@ pio run -d wokwi/hardware -e esp32
 cd wokwi/hardware/chips/engine-interface
 wokwi-cli chip compile engine-interface.chip.c hw_core.c adapter.c json.c \
   -o engine-interface.chip.wasm
+cd ../sensor-front-end
+wokwi-cli chip compile sensor-front-end.chip.c -o sensor-front-end.chip.wasm
+cd ../output-stage
+wokwi-cli chip compile output-stage.chip.c -o output-stage.chip.wasm
 cd ../..
 wokwi-cli lint .
 ```

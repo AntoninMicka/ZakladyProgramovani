@@ -1,0 +1,28 @@
+{
+  "name": "MOSFET / IGBT + zateze (logicky model)",
+  "author": "ECU Simulator",
+  "pins": [
+    "VCC",
+    "PGND",
+    "POWER_EN",
+    "INJ1_CTRL",
+    "INJ2_CTRL",
+    "INJ3_CTRL",
+    "INJ4_CTRL",
+    "IGN1_CTRL",
+    "IGN2_CTRL",
+    "IGN3_CTRL",
+    "IGN4_CTRL",
+    "IGN4_LOAD",
+    "IGN3_LOAD",
+    "IGN2_LOAD",
+    "IGN1_LOAD",
+    "INJ4_LOAD",
+    "INJ3_LOAD",
+    "INJ2_LOAD",
+    "INJ1_LOAD",
+    "",
+    "",
+    ""
+  ]
+}

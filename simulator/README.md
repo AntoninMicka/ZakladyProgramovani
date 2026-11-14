@@ -285,6 +285,9 @@ Sestavení a nativní integrační testy jsou ověřené. Přímé propojení Se
 s UART chipu i skutečný běh Wokwi zůstávají otevřené: viz [prototyp a výsledky](wokwi/hardware/VERIFICATION.md).
 Následující Mega demo je historický profil, který neodděluje protokol od ECU.
 
+Rozšířené schéma odděluje snímače, vstupní obvody, MCU a drivery osmi zátěží.
+Má přepínač hlavního relé a LED indikaci; [popis schématu a měřicích bodů](wokwi/hardware/README.md#schéma-blíže-skutečné-ecu).
+
 ## Historický Wokwi demonstrační projekt (Mega)
 
 Používá Arduino Mega 2560 kvůli samostatnému UART pro hostitele a chip.

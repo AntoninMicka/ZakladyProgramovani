@@ -1,0 +1,24 @@
+{
+  "name": "Vstupy ECU / kabelaz snimacu",
+  "author": "ECU Simulator",
+  "pins": [
+    "VCC",
+    "GND",
+    "CKP_IN",
+    "CMP_IN",
+    "MAP_IN",
+    "TPS_IN",
+    "IAT_IN",
+    "CLT_IN",
+    "LAMBDA_IN",
+    "LAMBDA_OUT",
+    "CLT_OUT",
+    "IAT_OUT",
+    "TPS_OUT",
+    "MAP_OUT",
+    "CMP_OUT",
+    "CKP_OUT",
+    "",
+    ""
+  ]
+}

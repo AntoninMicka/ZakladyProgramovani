@@ -4,10 +4,12 @@
 import argparse
 import json
 import math
-from html import escape
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from hardware_wiring import diagram as build_diagram, drawing
 
 
 def number(value, low, high):
@@ -198,44 +200,7 @@ def generate(e, p, target, curves):
         ("FIRING_ORDER", e["firing_order"]),
     ]:
         fw += f"static const unsigned {name}[]={array(vals)};\n"
-    parts = [
-        dict(type=p["part"], id="ecu", left=0, top=0, attrs={}),
-        dict(type="chip-engine-interface", id="engine", left=500, top=0, attrs={}),
-        dict(type="wokwi-logic-analyzer", id="logic", left=500, top=-220, attrs={}),
-    ]
-    connections = [
-        ["$serialMonitor:TX", "engine:RX", "green", []],
-        ["engine:TX", "$serialMonitor:RX", "green", []],
-        [f"ecu:{p['power']}", "engine:VCC", "red", []],
-        [f"ecu:{p['ground']}", "engine:GND", "black", []],
-        [f"ecu:{p['diagnostic_tx']}", "engine:DIAG_RX", "gray", []],
-    ]
-    pinmap = []
-
-    def connect(gpio, chip, color):
-        label = p.get("digital_labels", {}).get(str(gpio), f"{p['digital_prefix']}{gpio}")
-        connections.append([f"ecu:{label}", f"engine:{chip}", color, []])
-        pinmap.append((chip, label))
-
-    connect(p["ckp"], "CKP", "blue")
-    connect(p["cmp"], "CMP", "purple")
-    for i, name in enumerate(("MAP", "TPS", "IAT", "CLT", "LAMBDA")):
-        connections.append([f"engine:{name}", f"ecu:{p['analog_labels'][i]}", "orange", []])
-        pinmap.append((name, p["analog_labels"][i]))
-    for i in range(4):
-        connect(p["injectors"][i], f"INJ{i + 1}", "green")
-        connect(p["ignition"][i], f"IGN{i + 1}", "magenta")
-    for i, name in enumerate(("CKP", "CMP", "INJ1", "IGN1")):
-        connections.append([f"engine:{name}", f"logic:D{i}", "blue", []])
-    connections.append(["logic:GND", "engine:GND", "black", []])
-    diagram = dict(
-        version=1,
-        author="ECU Hardware Simulator",
-        editor="wokwi",
-        parts=parts,
-        connections=connections,
-        serialMonitor=dict(display="always", newline="lf"),
-    )
+    diagram, pinmap = build_diagram(e, p, target)
     extension = "bin" if target == "esp32" else "hex"
     toml = f"""# Generated for {target}; ECU UART is NOT the simulation transport.
 [wokwi]
@@ -248,56 +213,31 @@ vcdFile = 'capture.vcd'
 [[chip]]
 name = 'engine-interface'
 binary = 'chips/engine-interface/engine-interface.chip.wasm'
+
+[[chip]]
+name = 'sensor-front-end'
+binary = 'chips/sensor-front-end/sensor-front-end.chip.wasm'
+
+[[chip]]
+name = 'output-stage'
+binary = 'chips/output-stage/output-stage.chip.wasm'
 """
     doc = (
         f"# Generovaná pinmapa – {target}\n\n| Custom Chip | ECU pin |\n| --- | --- |\n"
         + "".join(f"| {a} | {b} |\n" for a, b in pinmap)
     )
     doc += "\n![Signálové schéma](wiring.svg)\n"
+    doc += "\nSignály snímačů vedou přes sensor-front-end; povely INJ/IGN přes output-stage.\n"
     doc += "\nSerial Monitor TX → chip RX, chip TX → Serial Monitor RX. ECU TX → DIAG_RX (diagnostika).\n"
-    svg = [
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 940" role="img" aria-labelledby="title desc">',
-        '<title id="title">ECU Hardware Simulator – izolované simulační rozhraní</title>',
-        '<desc id="desc">Python komunikuje přímo s UART adaptérem chipu přes explicitní piny Serial Monitoru. ECU firmware používá pouze CKP, CMP, analogové snímače a výstupy INJ/IGN.</desc>',
-        '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="context-stroke"/></marker></defs>',
-        '<rect width="1100" height="940" fill="#0f172a"/>',
-        '<g font-family="DejaVu Sans,Arial,sans-serif" fill="#e2e8f0">',
-        '<text x="35" y="42" font-size="24">ECU Hardware Simulator · ' + escape(target) + "</text>",
-        '<rect x="35" y="70" width="1030" height="105" rx="10" fill="#1e293b" stroke="#38bdf8"/>',
-        '<text x="55" y="102" font-size="17">Python model ↔ RFC2217 / Serial Monitor ↔ UART adaptér v Custom Chipu</text>',
-        '<text x="55" y="130" font-size="14">JSON Lines + CRC32 · relace · buffered segmenty · virtuální čas Wokwi</text>',
-        '<text x="55" y="155" font-size="14" fill="#fbbf24">Přímá topologie UART čeká na skutečný integrační test Wokwi.</text>',
-        '<path d="M900 175 V205" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>',
-        '<rect x="35" y="210" width="300" height="545" rx="10" fill="#1e293b" stroke="#64748b"/>',
-        '<rect x="755" y="210" width="310" height="545" rx="10" fill="#1e293b" stroke="#64748b"/>',
-        '<text x="55" y="241" font-size="18">ECU MCU · pouze GPIO / ADC</text>',
-        '<text x="775" y="241" font-size="18">Engine Interface Custom Chip</text>',
-    ]
-    for i, (name, label) in enumerate(pinmap):
-        y = 278 + i * 27
-        output = name.startswith(("INJ", "IGN"))
-        color = "#4ade80" if output else "#38bdf8"
-        svg.append(
-            f'<text x="315" y="{y + 5}" text-anchor="end" font-size="15">{escape(label)}</text>'
-        )
-        svg.append(
-            f'<path d="M335 {y} H755" stroke="{color}" stroke-width="2" marker-{"end" if output else "start"}="url(#arrow)"/>'
-        )
-        svg.append(f'<text x="775" y="{y + 5}" font-size="15">{escape(name)}</text>')
-    svg.extend(
-        [
-            '<text x="55" y="727" font-size="13">TX → DIAG_RX → Chips Console</text>',
-            '<text x="775" y="727" font-size="13">VCC / GND společné s MCU</text>',
-            '<rect x="35" y="785" width="1030" height="75" rx="10" fill="#1e293b" stroke="#a78bfa"/>',
-            '<text x="55" y="814" font-size="17">Logic Analyzer: D0 ← CKP · D1 ← CMP · D2 ← INJ1 · D3 ← IGN1</text>',
-            '<text x="55" y="840" font-size="14">Export VCD → kontrola geometrie a časování · samostatně od UART diagnostiky</text>',
-            '<text x="35" y="900" font-size="14" fill="#94a3b8">Firmware ECU neobsahuje simulační JSON protokol ani fyzikální model motoru.</text>',
-            "</g></svg>",
-        ]
-    )
-    wiring = "\n".join(svg) + "\n"
+    wiring = drawing(target, e)
     return {
         "config/generated_hw.h": header,
+        "config/generated_outputs.h": (
+            "// Generated from config/engine.json.\n#pragma once\n"
+            f"#define OUTPUT_CYLINDERS {e['cylinders']}\n"
+            f"#define OUTPUT_INJ_ACTIVE {int(cap['injector_active_high'])}\n"
+            f"#define OUTPUT_IGN_ACTIVE {int(cap['ignition_active_high'])}\n"
+        ),
         "firmware/include/generated_pins.h": fw,
         "diagram.json": json.dumps(diagram, indent=2) + "\n",
         "wokwi.toml": toml,
