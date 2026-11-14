@@ -1,0 +1,4 @@
+# Merge into your existing Wokwi project config:
+[wokwi]
+rfc2217ServerPort = 4000
+# Keep existing firmware and elf paths here.
