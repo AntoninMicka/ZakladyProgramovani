@@ -30,7 +30,7 @@
 <path d="M375 333 L425 333" stroke="#38bdf8" stroke-width="3" fill="none"/>
 <text x="50" y="391" font-size="16" fill="#e2e8f0">MAP · tlak v sání</text>
 <path d="M375 386 L425 386" stroke="#38bdf8" stroke-width="3" fill="none"/>
-<text x="50" y="444" font-size="16" fill="#e2e8f0">TPS · poloha škrticí klapky</text>
+<text x="50" y="444" font-size="16" fill="#e2e8f0">TPS · výukový vstup pedálu</text>
 <path d="M375 439 L425 439" stroke="#38bdf8" stroke-width="3" fill="none"/>
 <text x="50" y="497" font-size="16" fill="#e2e8f0">IAT / CLT · teplotní snímače</text>
 <path d="M375 492 L425 492" stroke="#38bdf8" stroke-width="3" fill="none"/>

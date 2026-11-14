@@ -60,7 +60,7 @@ class EngineView:
         self.load = tk.DoubleVar(value=state["load_nm"])
         self.speed = tk.StringVar(value=f"{app.engine.speed:g}")
         for title, variable, maximum in [
-            ("Plyn %", self.throttle, 100),
+            ("Pedál %", self.throttle, 100),
             ("Zátěž Nm", self.load, 100),
         ]:
             ttk.Label(controls, text=title).pack(side="left", padx=(0, 4))

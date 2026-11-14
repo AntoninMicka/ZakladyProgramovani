@@ -1,6 +1,6 @@
 # Evidence a akceptace druhé fáze
 
-Ověření 14. 11. 2026: všech 61 Python testů včetně skutečného TCP testu, geometrie vizualizace
+Ověření 14. 11. 2026: všech 65 Python testů včetně skutečného TCP testu, geometrie vizualizace
 a šesti skutečných Tk GUI testů prošlo;
 prošel také samostatný C host test. Implementace je připravena pro lokální SIL a pro integrační
 ověření s Wokwi. Celá fáze **není zatím akceptována**, protože chybí skutečný běh
@@ -8,7 +8,8 @@ s demonstračním MCU a měření na virtuálních pinech.
 
 | Oblast | Dosažené ověření | Stav |
 | --- | --- | --- |
-| Mock se společnou C++ ECU | skutečné pulse widths 3 ms/2 ms, CKP/CMP sync, watchdog, nezávislost na GUI rate, změna C++ na 4 ms, chybový překlad zachová běžící ECU | ověřeno nativně a v Tk bez Wokwi |
+| Oddělení pedálu a paliva | společná ECU: pedál → skutečný vstřik; stejný moment jako dříve; konstantní dávka v C++ dává stejné RPM při různých pedálech | ověřeno nativně, ADC kalibrace na hostiteli |
+| Mock se společnou C++ ECU | skutečné délky vstřiku 0–3 ms a dwell 2 ms, CKP/CMP sync, watchdog, nezávislost na GUI rate, změna C++ na 4 ms, chybový překlad zachová běžící ECU | ověřeno nativně a v Tk bez Wokwi |
 | Editor ECU | Tk test editace, uložení, chyby překladu bez přerušení starého procesu a úspěšné aplikace s novým PID a revizí | ověřeno s testovacím CLI |
 | Správa Wokwi CLI v GUI | skutečné okno, ověření instalovaného CLI; testovací procesy pro scénář, živý přenos, zastavení a maskování tokenu | ověřeno lokálně; bez runtime ESP32 |
 | Výpis telemetrie | formátování, omezení historie, nezávislé snímky, skutečný Tk panel a export JSONL/TXT | ověřeno lokálně |

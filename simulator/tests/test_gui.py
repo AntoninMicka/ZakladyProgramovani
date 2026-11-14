@@ -290,7 +290,10 @@ class GuiTests(unittest.TestCase):
                 text = editor.code.get("1.0", "end-1c")
                 editor.code.delete("1.0", "end")
                 editor.code.insert(
-                    "1.0", text.replace("now + ECU_INJECTION_US", "now + ECU_INJECTION_US + 1000")
+                    "1.0",
+                    text.replace(
+                        "ECU_INJECTION_US * accelerator", "ECU_INJECTION_US * accelerator + 1000"
+                    ),
                 )
                 old = app.bridge.controller.revision
                 editor.build(True)
@@ -307,7 +310,7 @@ class GuiTests(unittest.TestCase):
                 self.assertFalse(panel.mock_busy)
                 self.assertEqual(app.mode, "mock")
                 self.assertNotEqual(app.bridge.controller.revision, old)
-                self.assertEqual(set(app.engine.snapshot()["last_injection_us"].values()), {4000})
+                self.assertEqual(set(app.engine.snapshot()["last_injection_us"].values()), {2050})
                 self.assertFalse(panel.runner.busy)
                 live = app.bridge.controller
                 editor.code.delete("1.0", "end")

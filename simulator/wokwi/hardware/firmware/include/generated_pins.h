@@ -15,6 +15,9 @@
 #define ECU_DWELL_US 2000
 #define ECU_ADVANCE_DEG 15
 #define ECU_TIMER_US 25
+#define ECU_ADC_REFERENCE_V 5.0
+#define ECU_PEDAL_MIN_V 0.33
+#define ECU_PEDAL_MAX_V 2.97
 static const unsigned INJECTOR_PINS[]={16,17,18,19};
 static const unsigned IGNITION_PINS[]={21,22,23,25};
 static const unsigned ANALOG_PINS[]={32,33,34,35,36};

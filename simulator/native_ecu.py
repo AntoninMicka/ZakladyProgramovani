@@ -62,6 +62,9 @@ def build_native(config, signals, project=PROJECT):
         ECU_DWELL_US=demo["dwell_us"],
         ECU_ADVANCE_DEG=demo["advance_deg"],
         ECU_TIMER_US=demo["timer_us"],
+        ECU_ADC_REFERENCE_V=5.0,
+        ECU_PEDAL_MIN_V=settings["analog"]["TPS"]["points"][0][1],
+        ECU_PEDAL_MAX_V=settings["analog"]["TPS"]["points"][-1][1],
     )
     header = "#pragma once\n" + "".join(f"#define {key} {value}\n" for key, value in values.items())
     header += "static const unsigned FIRING_ORDER[]={" + ",".join(map(str, order)) + "};\n"
@@ -110,17 +113,25 @@ class NativeEcu:
         self.library = lib = c.CDLL(str(path))
         lib.ecu_create.restype = c.c_void_p
         lib.ecu_destroy.argtypes = [c.c_void_p]
-        lib.ecu_reset.argtypes = [c.c_void_p, c.c_uint64]
+        lib.ecu_reset.argtypes = [c.c_void_p, c.c_uint64, c.c_double]
         lib.ecu_advance.argtypes = [
             c.c_void_p,
             c.c_uint64,
+            c.c_double,
             c.POINTER(InputEdge),
             c.c_size_t,
             c.POINTER(OutputEdge),
             c.c_size_t,
         ]
         lib.ecu_advance.restype = c.c_int
-        for name, kind in (("rpm", c.c_double), ("synced", c.c_uint), ("errors", c.c_uint32)):
+        for name, kind in (
+            ("rpm", c.c_double),
+            ("synced", c.c_uint),
+            ("errors", c.c_uint32),
+            ("pedal", c.c_double),
+            ("requested_rpm", c.c_double),
+            ("injection_us", c.c_uint32),
+        ):
             function = getattr(lib, "ecu_" + name)
             function.argtypes = [c.c_void_p]
             function.restype = kind
@@ -130,16 +141,16 @@ class NativeEcu:
         self.outputs = (OutputEdge * 4096)()
         self.received = 0
 
-    def reset(self, now=0):
-        self.library.ecu_reset(self.handle, now)
+    def reset(self, now=0, accelerator=1):
+        self.library.ecu_reset(self.handle, now, accelerator)
         self.received = 0
 
-    def advance(self, end, edges):
+    def advance(self, end, edges, accelerator=1):
         inputs = (InputEdge * len(edges))(
             *(InputEdge(e.simulation_time_us, int(e.signal == "CMP"), e.level) for e in edges)
         )
         count = self.library.ecu_advance(
-            self.handle, end, inputs, len(inputs), self.outputs, len(self.outputs)
+            self.handle, end, accelerator, inputs, len(inputs), self.outputs, len(self.outputs)
         )
         if count < 0:
             raise RuntimeError("Mock ECU: neplatné časy nebo přeplněná fronta výstupů")
@@ -172,6 +183,13 @@ class NativeEcu:
             synced=bool(self.library.ecu_synced(self.handle)),
             errors=self.library.ecu_errors(self.handle),
             events=self.received,
+            accelerator=self.library.ecu_pedal(self.handle),
+            requested_rpm=(
+                None
+                if self.library.ecu_requested_rpm(self.handle) < 0
+                else self.library.ecu_requested_rpm(self.handle)
+            ),
+            injection_us=self.library.ecu_injection_us(self.handle),
         )
 
     def __del__(self):

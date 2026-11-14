@@ -26,20 +26,25 @@ void *ecu_create() {
 void ecu_destroy(HostEcu *host) {
   delete host;
 }
-void ecu_reset(HostEcu *host, uint64_t now) {
+void ecu_reset(HostEcu *host, uint64_t now, double accelerator) {
   *host = HostEcu{};
   host->now = now;
   host->next_tick = now + ECU_TIMER_US;
+  host->ecu.set_accelerator(accelerator);
+  host->ecu.update_control(static_cast<uint32_t>(now));
+  host->ecu.last_control_us = static_cast<uint32_t>(now);
+  host->ecu.have_control = true;
 }
 // Čas je výhradně simulační. Při shodném čase obsloužíme snímač před časovačem.
-int ecu_advance(HostEcu *host, uint64_t end, const InputEdge *edges, size_t count,
-                OutputEdge *outputs, size_t capacity) {
+int ecu_advance(HostEcu *host, uint64_t end, double accelerator, const InputEdge *edges,
+                size_t count, OutputEdge *outputs, size_t capacity) {
   if (end < host->now)
     return -1;
   for (size_t i = 0; i < count; i++)
     if (edges[i].time < host->now || edges[i].time > end ||
         (i && edges[i].time < edges[i - 1].time) || edges[i].signal > 1 || edges[i].level > 1)
       return -1;
+  host->ecu.set_accelerator(accelerator);
   size_t input = 0, output = 0;
   bool overflow = false;
   auto write = [&](bool ignition, unsigned channel, unsigned level) {
@@ -90,6 +95,15 @@ int ecu_advance(HostEcu *host, uint64_t end, const InputEdge *edges, size_t coun
   }
   host->now = end;
   return overflow ? -2 : static_cast<int>(output);
+}
+double ecu_requested_rpm(const HostEcu *host) {
+  return host->ecu.requested_rpm;
+}
+double ecu_pedal(const HostEcu *host) {
+  return host->ecu.accelerator;
+}
+uint32_t ecu_injection_us(const HostEcu *host) {
+  return host->ecu.injection_us;
 }
 double ecu_rpm(const HostEcu *host) {
   return host->ecu.rpm;

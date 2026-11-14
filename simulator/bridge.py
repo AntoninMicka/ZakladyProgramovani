@@ -131,7 +131,7 @@ class MockBridge(Bridge):
 
     def start(self):
         with self.engine.lock:
-            self.controller.reset(self.engine.clock.time_us)
+            self.controller.reset(self.engine.clock.time_us, self.engine.model.throttle)
             self.engine.local_ecu = self.controller
             self.started = True
 

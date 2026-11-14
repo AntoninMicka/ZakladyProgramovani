@@ -194,7 +194,7 @@ def drawing(target, engine):
             f"CKP · poloha kliky · {engine['ckp']['teeth']}-{engine['ckp']['missing']}",
             "CMP · poloha vačky · cyklus 720°",
             "MAP · tlak v sání",
-            "TPS · poloha škrticí klapky",
+            "TPS · výukový vstup pedálu",
             "IAT / CLT · teplotní snímače",
             "Lambda · výstup jejího řadiče",
         )

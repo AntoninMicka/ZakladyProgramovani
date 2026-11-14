@@ -29,7 +29,7 @@ class NativeEcuTests(unittest.TestCase):
         engine, bridge = self.run_engine()
         try:
             state = engine.snapshot()
-            self.assertEqual(state["last_injection_us"], dict.fromkeys(range(4), 3000))
+            self.assertEqual(state["last_injection_us"], dict.fromkeys(range(4), 1050))
             self.assertEqual(state["last_dwell_us"], dict.fromkeys(range(4), 2000))
             self.assertAlmostEqual(state["ignition_deg"], 15, delta=0.4)
             self.assertEqual(state["diagnostics"]["rejected_commands"], 0)
@@ -84,7 +84,9 @@ class NativeEcuTests(unittest.TestCase):
             shutil.copy(PROJECT / "config/engine.json", project / "config/engine.json")
             original = (PROJECT / "firmware/include/ecu_controller.h").read_text()
             header.write_text(
-                original.replace("now + ECU_INJECTION_US", "now + ECU_INJECTION_US + 1000")
+                original.replace(
+                    "ECU_INJECTION_US * accelerator", "ECU_INJECTION_US * accelerator + 1000"
+                )
             )
             replacement = NativeEcu(app.engine.config, app.engine.signals, project)
             before = app.bridge.controller.revision
@@ -92,7 +94,7 @@ class NativeEcuTests(unittest.TestCase):
             for _ in range(1000):
                 app.engine.step()
             self.assertNotEqual(app.bridge.controller.revision, before)
-            self.assertEqual(set(app.engine.model.last_injection_us.values()), {4000})
+            self.assertEqual(set(app.engine.model.last_injection_us.values()), {2050})
             live = app.bridge.controller
             header.write_text("this is invalid C++")
             with self.assertRaisesRegex(RuntimeError, "Překlad Mock ECU selhal"):
@@ -113,7 +115,7 @@ class NativeEcuTests(unittest.TestCase):
         try:
             for _ in range(1000):
                 engine.step()
-            self.assertEqual(engine.model.last_injection_us, {0: 3000, 1: 3000})
+            self.assertEqual(engine.model.last_injection_us, {0: 1050, 1: 1050})
             self.assertTrue(bridge.diagnostics()["controller"]["synced"])
         finally:
             bridge.close()

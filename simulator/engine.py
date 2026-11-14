@@ -102,7 +102,7 @@ class Engine(Thread):
                 self.model.open_injectors.clear()
                 self.model.charging.clear()
                 if self.local_ecu is not None:
-                    self.local_ecu.reset(self.clock.time_us)
+                    self.local_ecu.reset(self.clock.time_us, self.model.throttle)
                 self.invalidate_outputs.clear()
             for _ in range(self.capacity):
                 try:
@@ -162,7 +162,7 @@ class Engine(Thread):
             # znovu po skutečných výstupech ECU: dávka se projeví až po konci pulzu.
             self.model.angle, self.model.rpm = angle, rpm
             cursor = start_us
-            for event in self.local_ecu.advance(end_us, edges):
+            for event in self.local_ecu.advance(end_us, edges, self.model.throttle):
                 timestamp = event["simulation_time_us"]
                 self.model.step((timestamp - cursor) / 1e6)
                 self._apply("event", event)
@@ -208,7 +208,7 @@ class Engine(Thread):
             self.model = EngineModel(self.config)
             self.clock.reset()
             if self.local_ecu is not None:
-                self.local_ecu.reset()
+                self.local_ecu.reset(0, self.model.throttle)
             self.pending.clear()
             for q in (self.commands, self.events):
                 while True:

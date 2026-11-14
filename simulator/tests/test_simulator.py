@@ -128,7 +128,7 @@ class CoreTests(unittest.TestCase):
         e.command({"load_nm": 25})
         e.step()
         self.assertEqual(e.model.load_nm, 25)
-        self.assertEqual(e.model.injector_ms, 2.5)
+        self.assertEqual(e.model.injector_ms, 0.875)
         self.assertFalse(e.pending)
 
     def test_pause_reset(self):
@@ -152,7 +152,7 @@ class CoreTests(unittest.TestCase):
             e.step()
         self.assertGreater(e.snapshot()["rpm"], 900)
         self.assertEqual(set(e.snapshot()["last_injection_us"]), {0, 1, 2, 3})
-        self.assertEqual(set(e.snapshot()["last_injection_us"].values()), {3000})
+        self.assertEqual(set(e.snapshot()["last_injection_us"].values()), {1050})
         b.close()
         self.assertEqual(b.metrics["invalid"], 0)
 

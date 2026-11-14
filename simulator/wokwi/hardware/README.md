@@ -165,7 +165,8 @@ python main.py --mode wokwi --wokwi-hardware --gui --baudrate 2000000 \
 
 Začněte se skutečným tempem `--speed 1`, výchozím `--rate 20` a 1000 RPM
 (`--rpm 1000`) pro měření signálů. Pro uzavřenou regulační vazbu `--rpm` vynechte;
-ECU má pevnou vstřikovací dávku/předstih, nejde o hotový regulátor volnoběhu.
+ECU převádí pedál na dávku v `update_control()` a používá pevný předstih;
+nejde o hotový regulátor volnoběhu. TPS kanál zde slouží jako výukový pedál.
 `--wokwi-hardware` vybere ochranu CRC32 a relace; při neuvedeném baudrate nastaví
 2 Mbaud. Původní profil `--mode wokwi` bez tohoto přepínače zůstává kompatibilní
 s historickým Mega demem, ale pro tento projekt se nepoužívá.

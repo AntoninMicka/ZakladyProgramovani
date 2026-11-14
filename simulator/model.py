@@ -5,7 +5,9 @@ import math
 
 # Výukové parametry mapy, nikoli kalibrace skutečného spalovacího motoru.
 DEFAULT_THROTTLE = 0.35
-DEFAULT_INJECTION_MS = 2.5
+# Počáteční držená dávka odpovídá původnímu výchozímu momentu (2,5 ms při 35 %).
+# Pedál ji za běhu nepřepisuje: další dávky dodá pouze výstup ECU.
+DEFAULT_INJECTION_MS = 0.875
 DEFAULT_ADVANCE_DEG = 12.0
 DEFAULT_LOAD_NM = 12.0
 REFERENCE_INJECTION_MS = 3.0
@@ -114,14 +116,7 @@ class EngineModel:
             0.1,
             1 - abs(self.ignition_deg - REFERENCE_ADVANCE_DEG) / SPARK_TOLERANCE_DEG,
         )
-        torque = (
-            REFERENCE_TORQUE_NM
-            * self.config.cylinders
-            / REFERENCE_CYLINDERS
-            * self.throttle
-            * fuel
-            * spark
-        )
+        torque = REFERENCE_TORQUE_NM * self.config.cylinders / REFERENCE_CYLINDERS * fuel * spark
         acceleration = (
             torque - self.load_nm - FRICTION_BASE_NM - FRICTION_PER_RPM * self.rpm
         ) / self.config.inertia
@@ -139,8 +134,15 @@ class EngineModel:
         self.angle += (before + self.rpm) / 2 * 6 * dt
 
     def snapshot(self):
+        # Jen orientační ukazatel směsi pro zachování původního zobrazení.
+        # Tato reference vzduchu NEMĚNÍ dávku ani moment; ty určuje palivo z ECU.
+        reference_air = REFERENCE_INJECTION_MS * self.throttle
+        mixture = (
+            reference_air / max(self.injector_ms, 0.1) if reference_air or self.injector_ms else 1
+        )
         return {
             "rpm": self.rpm,
+            "accelerator": self.throttle,
             "throttle": self.throttle,
             "tps": self.throttle,
             "map_kpa": MAP_CLOSED_KPA + MAP_SPAN_KPA * self.throttle,
@@ -150,7 +152,7 @@ class EngineModel:
             "crank_deg": self.angle % 720,
             "crank_angle_deg": self.angle % 360,
             "cycle_angle_deg": self.angle % 720,
-            "lambda_value": max(0.6, min(2, REFERENCE_INJECTION_MS / max(self.injector_ms, 0.1))),
+            "lambda_value": max(0.6, min(2, mixture)),
             "cylinders": self.config.cylinders,
             "load_nm": self.load_nm,
             "injector_ms": self.injector_ms,

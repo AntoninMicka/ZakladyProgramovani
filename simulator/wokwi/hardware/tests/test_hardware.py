@@ -54,6 +54,19 @@ class HardwareTests(unittest.TestCase):
                 cls.peripherals,
             ]
         )
+        cls.pedal = cls.build / "pedal-test"
+        run(
+            [
+                cxx,
+                "-std=c++17",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                ROOT / "tests/pedal_test.cpp",
+                "-o",
+                cls.pedal,
+            ]
+        )
         cls.throughput = cls.build / "throughput-test"
         run(
             [
@@ -297,6 +310,9 @@ class HardwareTests(unittest.TestCase):
         self.assertEqual(config["signals"]["teeth"], 36)
         self.assertEqual(config["signals"]["missing"], 1)
         self.assertIn("inertia", config["engine"])
+
+    def test_pedal_adc_calibration_and_shared_fuel_policy(self):
+        subprocess.run([self.pedal], check=True)
 
     def test_sensor_and_output_blocks(self):
         result = subprocess.run([self.peripherals], check=True, capture_output=True, text=True)

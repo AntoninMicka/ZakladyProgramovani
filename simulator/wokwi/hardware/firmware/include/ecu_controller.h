@@ -19,9 +19,9 @@
  *   us  = mikrosekundy; 1 sekunda = 1 000 000 mikrosekund.
  *   deg = stupně; úhel říká, kam se hřídel právě otočil.
  *
- * Jde o zjednodušené školní demo. Dávka paliva a předstih jsou přednastavené.
- * Není to hotová jednotka pro skutečné auto. Fyziku motoru počítá simulátor
- * zvlášť; zde pouze čteme události snímačů a rozhodujeme o výstupech.
+ * Jde o zjednodušené školní demo. Dávka paliva se zatím počítá přímo z pedálu, předstih je
+ * přednastavený. Není to hotová jednotka pro skutečné auto. Fyziku motoru počítá simulátor zvlášť;
+ * zde pouze čteme události snímačů a rozhodujeme o výstupech.
  */
 
 // Piny a hodnoty ECU_... se generují z JSON konfigurace projektu.
@@ -61,6 +61,43 @@ struct EcuController {
   // phase_at_edge je poloha při posledním zubu, last_phase při minulém tick().
   // double je typ pro čísla s desetinnou částí, například úhel 12,5 stupně.
   double rpm = 0, phase_at_edge = 0, last_phase = 0;
+
+  // Pedál je POUZE vstup od řidiče (0 = puštěný, 1 = plně sešlápnutý).
+  // Výchozí 1 zachovává plnou dávku při samostatném testu bez připojeného pedálu.
+  // Mock i firmware tuto hodnotu přepíšou skutečným vstupem.
+  double accelerator = 1;
+  // -1 znamená: regulace otáček zatím není zapnutá. Student sem může zapsat svůj cíl.
+  double requested_rpm = -1;
+  uint32_t injection_us = ECU_INJECTION_US;
+  uint32_t last_control_us = 0;
+  bool have_control = false;
+
+  void set_accelerator(double position) {
+    accelerator = isfinite(position) ? fmax(0, fmin(1, position)) : 0;
+  }
+
+  // TPS kanál zde ve výukovém zapojení přenáší polohu pedálu. Napětí mezi
+  // kalibrovaným minimem a maximem převedeme na číslo 0..1. V Mock přijde přímo.
+  void set_accelerator_adc(unsigned raw, unsigned maximum) {
+    double volts = maximum ? raw * ECU_ADC_REFERENCE_V / maximum : 0;
+    set_accelerator((volts - ECU_PEDAL_MIN_V) / (ECU_PEDAL_MAX_V - ECU_PEDAL_MIN_V));
+  }
+
+  // === MÍSTO PRO STUDENTSKÝ ÚKOL: ROZHODOVÁNÍ O PALIVU ===
+  // Tato funkce je stejná v Mock i na desce a volá se každých 10 ms simulačního času.
+  // Vstupy: accelerator = poloha pedálu 0..1, rpm = otáčky změřené z CKP.
+  // Výstup: injection_us = požadovaná délka vstřiku v mikrosekundách.
+  // now je aktuální čas v us; může se hodit pro budoucí regulátor.
+  //
+  // ZATÍM ponecháváme prostý převod „pedál -> palivo“:
+  // 3000 us při plném pedálu, 1500 us při polovině, 1050 us při 35 %.
+  // Úkol do budoucna: pedál převedeš na POŽADOVANÉ otáčky a uložíš je do requested_rpm.
+  // Porovnáš je s rpm a dávku upravíš podle rozdílu. Takový regulátor zde ještě NENÍ.
+  // Kvůli úkolu neupravuj Python model, snímače, časovače ani přímo proměnnou rpm.
+  void update_control(uint32_t now) {
+    (void)now;
+    injection_us = (uint32_t)lround(ECU_INJECTION_US * accelerator);
+  }
 
   // Převod úhlu do jednoho cyklu: výsledek bude od 0 do méně než 720 stupňů.
   // Podobně jako hodiny po 12 zase ukážou 1, motor po 720 stupních začne nový cyklus.
@@ -205,6 +242,14 @@ struct EcuController {
   // tick = jeden krátký kontrolní krok. main.cpp ho běžně volá každých 25 us.
   // Nejprve zkontrolujeme snímač, potom konce pulzů a nakonec jejich nové začátky.
   template <class Write> void tick(uint32_t now, Write write) {
+    if (!have_control || (uint32_t)(now - last_control_us) >= 10000) {
+      update_control(now);
+      // Omezení výstupu zůstává společné i po studentské změně algoritmu.
+      if (injection_us > 100000)
+        injection_us = 100000;
+      last_control_us = now;
+      have_control = true;
+    }
     if (have_ckp && normal_us && now - last_ckp > normal_us * 5 + 1000) {
       // Watchdog je „hlídač“: CKP dlouho mlčí, motor se mohl zastavit nebo vypadl snímač.
       // Limit = pět běžných roztečí + 1000 us navíc; pojme i běžnou mezeru 60-2.
@@ -246,10 +291,16 @@ struct EcuController {
         if (!injector_on[channel] && crossed(last_phase, phase, wrap(fire + 360))) {
           // V tomto demu zahajujeme vstřik půl cyklu (360°) po referenčním bodu.
           // Otevřeme vstřikovač a uložíme budoucí čas jeho zavření.
-          // Výchozích 3000 us = 3 ms; dávku zde nepočítáme z ADC ani ze zatížení.
+          // Délku dávky už spočítala update_control(); zde ji pouze načasujeme.
           write(false, channel, ECU_INJ_ACTIVE);
           injector_on[channel] = true;
-          injector_end[channel] = now + ECU_INJECTION_US;
+          injector_end[channel] = now + injection_us;
+          if (injection_us == 0) {
+            // Nulovou dávku v našem pulzním modelu oznámí dvojice hran bez čekání.
+            // Vstřik nezůstane viset do dalšího ticku; nejde o fyzikální model ventilu.
+            write(false, channel, !ECU_INJ_ACTIVE);
+            injector_on[channel] = false;
+          }
         }
         // Cívka potřebuje nejprve nahromadit energii. Době nabíjení se říká dwell.
         // Nabíjení proto zahájíme před jiskrou; jiskru chceme ještě o předstih dříve

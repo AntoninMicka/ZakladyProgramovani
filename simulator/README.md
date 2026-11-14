@@ -47,7 +47,8 @@ Hodnoty dávky/dwell/předstihu se načtou z `wokwi/hardware/config/engine.json`
 geometrie CKP/CMP a počet válců z aktivního Python modelu. Výchozí pořadí čtyřválce
 je 1–3–4–2. Není zde druhá Python implementace řídicího algoritmu.
 
-Demo ECU má pevnou dávku 3 ms a dwell 2 ms, ne původní Mock regulaci k 1200 RPM.
+Demo ECU má zatím přímý převod pedál → palivo (0–3 ms), dwell 2 ms a pevný předstih.
+Regulace požadovaných otáček zatím není implementovaná.
 Otáčky při volné dynamice závisejí na plynu a zatížení. `--rpm 1000` zapne stolici.
 `--rate` řídí jen četnost výpisů/GUI, nikoli činnost ECU. Pauza zastaví také lokální
 ECU a `--speed` zpomalí model i ECU společně. CKP a CMP se pro ECU generují přímo,
@@ -58,6 +59,30 @@ Model pak integruje stejný krok po jednotlivých výstupních událostech ECU. 
 `--step-us` zpřesní vazbu při změnách RPM. Nativní běh ověřuje řídicí logiku;
 nenapodobuje instrukce MCU, latence ISR, ADC ani časování virtuálních pinů Wokwi.
 V telemetrii `bridge.controller` jsou revize, odhad RPM, synchronizace a počet událostí.
+
+## Příprava studentského úkolu: regulace otáček
+
+Pedál vstupuje do společného C++ řadiče jako `accelerator` (0–1). Funkce
+`EcuController::update_control(now)` určuje `injection_us`; student bude měnit
+právě ji. Zatím zůstává přímý převod `3000 * accelerator`. Pole `requested_rpm`
+je připravené pro budoucí cíl a zobrazuje se v diagnostice, výchozí -1 znamená
+nepoužito. Žádný regulátor cílových otáček se automaticky nezapíná.
+
+Původní násobek pedálu byl přesunut z Python momentu do ECU dávky: například při
+35 % je místo pevného 3ms vstřiku a násobku 0,35 skutečný 1,05ms vstřik. Výsledný
+ustálený moment je stejný. Python už pedálem moment znovu nenásobí; studenti tak
+mohou množství paliva určit i nezávisle na poloze pedálu. Odezva probíhá po pulzech
+vstřiku a po krocích časovače (25 µs), nikoli okamžitým přepsáním otáček.
+
+Mock předává pedál přímo při integraci. Firmware čte každých 10 ms kalibrovaný
+ADC kanál TPS jako výukový vstup pedálu (referenční napětí virtuálního ADC 5 V).
+Kalibrační krajní napětí se generují z TPS bodů JSONu; ADC kvantování může dávku
+mírně odlišit od Mock. Výchozí držená dávka při startu je 0,875 ms, aby výchozí
+moment před prvním dokončeným pulzem odpovídal dřívějšímu stavu.
+MAP a lambda zůstávají orientační diagnostikou a nevstupují do řízení tohoto úkolu.
+
+[Zadání pro studenta](docs/ukol_regulace_otacek.md) obsahuje postup zkoušení i
+rozdíl mezi požadovanými otáčkami ECU a stolici `--rpm`. Úkol řešte bez `--rpm`.
 
 ## Editor ECU za běhu
 

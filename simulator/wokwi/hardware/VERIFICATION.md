@@ -9,7 +9,7 @@ scénář. Skutečný Wokwi běh chybí kvůli `Missing WOKWI_CLI_TOKEN environm
 
 | Kontrola | Výsledek | Co prokazuje |
 | --- | --- | --- |
-| Hardware testy Python/C/C++ | 17 testů prošlo | následující nativní scénáře |
+| Hardware testy Python/C/C++ | 18 testů prošlo | následující nativní scénáře |
 | UART 2 Mbaud | nativně 2000/7500 RPM: 37,1/54,9 %, peak TX 3, žádné ztráty | délky skutečně serializovaných rámců, 10 bitů/bajt, 10 s na scénář |
 | C core – 8 scénářů | prošlo | 60-2, 720° CMP, RPM změny, stop/restart, analog, pulzy, polarity/poruchy, omezení front |
 | Buffered doručení | prošlo | stejné GPIO termíny při různě časném doručení stavu před apply time |
@@ -152,3 +152,12 @@ Nové `sensor-front-end` a `output-stage` WASM sestavené CLI 0.29.1; lint bez c
 17 hardware testů včetně nativního testu skutečných zdrojů obou chipů prošlo.
 Logické bloky nejsou fyzikální simulací MOSFET, IGBT ani analogové ochrany vstupů.
 Skutečný běh nového schématu v MCU/Wokwi zůstává otevřený.
+
+## Pedál jako vstup společné ECU
+
+`update_control()` převádí pedál přímo na dávku 0–ECU_INJECTION_US; regulátor
+požadovaných otáček zatím není implementovaný. Firmware vzorkuje TPS/pedál po
+10 ms, používá generovanou kalibraci a do diagnostiky přidává PEDAL/FUEL_US/RPM_GOAL.
+18 hardware testů zahrnuje kalibraci ADC 10/12 bitů a společný výpočet dávky.
+Nový firmware se sestavil pro ESP32 i Mega; skutečný běh této změny ve Wokwi
+zůstává otevřený.

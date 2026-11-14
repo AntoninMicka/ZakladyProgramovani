@@ -22,7 +22,8 @@ není. Události nesou vlastní značky a měří se jejich opoždění; model h
 
 Úhel se integruje lichoběžníkově z počátečních a koncových RPM:
 `delta_angle = (rpm_before + rpm_after) / 2 * 6 * dt`.
-Moment je zjednodušená funkce plynu, paliva, předstihu a počtu válců.
+Moment je zjednodušená funkce skutečné dávky paliva, předstihu a počtu válců.
+Pedál je vstup ECU; fyzikální model jím moment znovu nenásobí.
 `alpha = (torque - load - friction) / inertia`, převod na změnu RPM je `60/(2π)`.
 To nenahrazuje termodynamiku a skutečnou charakteristiku motoru.
 
@@ -110,3 +111,14 @@ Fronta zůstává omezená na 4096; při vysokých RPM musí odběratel číst d
 Například při 6000 RPM a `--rate 2` se přes 5800 hran do jednoho odběru nevejde.
 `dropped_events` zde znamená ztrátu volitelného hostitelského záznamu, nikoli ztrátu
 pinů Wokwi. Vzor zubů i úhlové vzorky GUI jsou připravené při konstrukci generátoru.
+
+## Pedál a výpočet paliva
+
+Společná ECU aktualizuje `update_control(now)` každých 10000 µs virtuálního času.
+Mock předává vstup pedálu přímo, firmware vzorkuje ADC každých 10 ms. Dávka se
+promítne do fyzikálního modelu až jako dokončený vstřik. Změna požadavku nemění
+již otevřený pulz. Nulovou dávku oznamuje výukový řadič dvojicí hran bez čekání;
+v Mock mají shodný čas, na MCU může vzniknout velmi krátký pulz kvůli provádění
+instrukcí. Nejde o fyzikální model pohybu ventilu. Platí předchozí pravidlo držení
+poslední dávky při ztrátě komunikace. Regulace otáček zatím není
+implementovaná: `requested_rpm=-1` znamená přímé řízení paliva podle pedálu.

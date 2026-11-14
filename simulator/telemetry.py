@@ -21,6 +21,14 @@ def format_sample(state, bridge, wall_elapsed_s):
         f"lost={diagnostic['dropped_events']} late={diagnostic['late_events']} "
         f"rejected={diagnostic['rejected_commands']}"
     )
+    controller = bridge.get("controller")
+    if controller:
+        goal = controller.get("requested_rpm")
+        text += (
+            f" ECU_pedal={controller.get('accelerator', 0) * 100:.1f}%"
+            f" ECU_fuel={controller.get('injection_us', 0)}us"
+            f" ECU_rpm_goal={goal if goal is not None else 'off'}"
+        )
     hardware = bridge.get("hardware")
     if hardware:
         text += (

@@ -15,7 +15,7 @@
  *      Ty nevolá loop(), ale události snímačů a časovače.
  *
  * Firmware přijímá polohu přes piny, nikoli jako simulační JSON zprávy.
- * ADC zatím pouze čte a vypisuje. Toto demo z něj dávku paliva nevypočítává.
+ * Kanál TPS používáme jako výukový pedál. ECU z něj zatím přímo vypočítá dávku.
  */
 #include "ecu_controller.h"
 #include <Arduino.h> // pinMode, digitalWrite, micros a další příkazy Arduino.
@@ -140,14 +140,25 @@ void setup() {
 // loop() se po dokončení setup() opakuje stále dokola.
 // O přesné řízení se starají snímače a časovač výše. Tady připravujeme čitelný výpis.
 void loop() {
-  // static uvnitř funkce znamená: hodnotu si pamatuj i při příštím zavolání.
-  static uint32_t last_report;
+  // Vstupy čteme každých 10 ms, i když dlouhý diagnostický výpis přijde jen po 100 ms.
+  static uint32_t last_inputs, last_report;
+  if (millis() - last_inputs >= 10) {
+    last_inputs = millis();
+    for (unsigned i = 0; i < 5; i++)
+      adc[i] = analogRead(ANALOG_PINS[i]);
+#if defined(ARDUINO_ARCH_ESP32)
+    portENTER_CRITICAL(&ecu_lock);
+    ecu.set_accelerator_adc(adc[1], 4095);
+    portEXIT_CRITICAL(&ecu_lock);
+#else
+    noInterrupts();
+    ecu.set_accelerator_adc(adc[1], 1023);
+    interrupts();
+#endif
+  }
   if (millis() - last_report < 100)
-    return; // Ještě neuplynulo 100 ms. Nic nevypisujeme, další volání přijde brzy.
+    return;
   last_report = millis();
-  // 100 ms = desetina sekundy, takže dostaneme přibližně deset výpisů za sekundu.
-  for (unsigned i = 0; i < 5; i++)
-    adc[i] = analogRead(ANALOG_PINS[i]);
 
   // Krátce si uděláme společnou „fotku“ údajů řadiče. Během kopírování se údaje
   // nesmí měnit: jinak bychom mohli přečíst polovinu starého a polovinu nového čísla.
@@ -158,6 +169,8 @@ void loop() {
   noInterrupts();
 #endif
   double rpm = ecu.rpm, cycle = ecu.phase_at_edge;
+  double pedal = ecu.accelerator, requested_rpm = ecu.requested_rpm;
+  uint32_t fuel_us = ecu.injection_us;
   bool synced = ecu.synced;
   unsigned slot = ecu.slot;
   uint32_t edges = ecu.edges, cam = ecu.cam_edges, errors = ecu.errors;
@@ -191,6 +204,15 @@ void loop() {
   Serial.print(cam);
   Serial.print(" ERR=");
   Serial.print(errors);
+  Serial.print(" PEDAL=");
+  Serial.print(pedal, 3);
+  Serial.print(" RPM_GOAL=");
+  if (requested_rpm < 0)
+    Serial.print("off");
+  else
+    Serial.print(requested_rpm, 0);
+  Serial.print(" FUEL_US=");
+  Serial.print(fuel_us);
   Serial.print(" ADC=");
   for (unsigned i = 0; i < 5; i++) {
     Serial.print(adc[i]);

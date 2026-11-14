@@ -135,6 +135,9 @@ def load(engine_path, pinout_path, target=None):
         if any(a[0] >= b[0] for a, b in zip(points, points[1:])):
             raise ValueError("unordered analog curve")
         curves.append(points)
+    pedal_points = e["analog"]["TPS"]["points"]
+    if pedal_points[0][1] >= pedal_points[-1][1]:
+        raise ValueError("TPS/pedal calibration must have increasing endpoint voltages")
     return e, p, target, curves
 
 
@@ -191,6 +194,9 @@ def generate(e, p, target, curves):
         "ECU_DWELL_US": e["demo"]["dwell_us"],
         "ECU_ADVANCE_DEG": e["demo"]["advance_deg"],
         "ECU_TIMER_US": e["demo"]["timer_us"],
+        "ECU_ADC_REFERENCE_V": 5.0,
+        "ECU_PEDAL_MIN_V": e["analog"]["TPS"]["points"][0][1],
+        "ECU_PEDAL_MAX_V": e["analog"]["TPS"]["points"][-1][1],
     }
     fw += "".join(f"#define {k} {v}\n" for k, v in definitions.items())
     for name, vals in [
