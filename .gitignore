@@ -3,3 +3,5 @@
 **/*.pyc
 **/.cache/clangd/
 **/compile_commands.json
+
+/.cache/launcher/
