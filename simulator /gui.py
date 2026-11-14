@@ -3,7 +3,9 @@ from collections import deque
 import math
 from time import monotonic
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, filedialog, messagebox
+from pathlib import Path
+from telemetry import TelemetryBuffer
 from visualization import cylinder_phase, piston_position
 
 BG = '#0f172a'
@@ -24,6 +26,9 @@ class EngineView:
         self.closed = False
         self.last_time = -1
         self.last_frame = None
+        self.telemetry = TelemetryBuffer()
+        self.next_telemetry_wall = 0.0
+        self.log_rows = 0
         root.title('ECU Simulator · živý pohled na motor')
         root.geometry('1180x940')
         root.minsize(960, 760)
@@ -58,20 +63,115 @@ class EngineView:
         speeds.pack(side='left')
         speeds.bind('<<ComboboxSelected>>', self.change_speed)
         ttk.Label(controls, text='× wall time').pack(side='left', padx=6)
-        body = ttk.Frame(root)
-        body.pack(fill='both', expand=True, padx=12)
+        notebook = ttk.Notebook(root)
+        notebook.pack(fill='both', expand=True, padx=12)
+        body = ttk.Frame(notebook)
+        notebook.add(body, text='Motor')
+        telemetry_page = ttk.Frame(notebook, padding=10)
+        notebook.add(telemetry_page, text='Telemetrie')
+        self.notebook = notebook
+        self.build_telemetry(telemetry_page)
         scrollbar = ttk.Scrollbar(body, orient='vertical')
         scrollbar.pack(side='right', fill='y')
         self.canvas = tk.Canvas(body, bg=BG, highlightthickness=0, yscrollcommand=scrollbar.set)
         self.canvas.pack(side='left', fill='both', expand=True)
         scrollbar.configure(command=self.canvas.yview)
         footer = ttk.Frame(root, padding=(18, 8, 18, 12))
-        footer.pack(fill='x')
+        footer.pack(fill='x', side='bottom', before=notebook)
         ttk.Label(footer, text='Fáze válců = kinematické schéma. Pro čitelný pohyb zvolte rychlost 0.02×.',
                   foreground=MUTED).pack(anchor='w')
         ttk.Label(footer, text='CKP/CMP = vzor podle úhlu hostitele; přesnost pinů Wokwi tím není měřena.',
                   foreground=MUTED).pack(anchor='w')
         self.timer = root.after(0, self.refresh)
+
+    def build_telemetry(self, page):
+        toolbar = ttk.Frame(page)
+        toolbar.pack(fill='x', pady=(0, 8))
+        self.log_summary = tk.StringVar(value='Čekám na první vzorek…')
+        ttk.Label(toolbar, textvariable=self.log_summary).pack(side='left')
+        ttk.Button(toolbar, text='Vymazat výpis', command=self.clear_telemetry).pack(side='right')
+        ttk.Button(toolbar, text='Uložit záznamy…', command=self.save_telemetry).pack(side='right', padx=8)
+        self.autoscroll = tk.BooleanVar(value=True)
+        ttk.Checkbutton(toolbar, text='Sledovat konec', variable=self.autoscroll).pack(side='right', padx=8)
+        ttk.Label(page, text='Aktuální snímek · snímače, výstupy ECU a diagnostika').pack(anchor='w')
+        self.current_telemetry = tk.Text(page, height=12, bg=PANEL, fg=TEXT, wrap='none',
+                                         font=('Monospace', 10), state='disabled')
+        self.current_telemetry.pack(fill='x', pady=(4, 12))
+        ttk.Label(page, text='Průběžný výpis · nejvýše 5 vzorků/s wall time · posledních 1000 vzorků').pack(anchor='w')
+        log_frame = ttk.Frame(page)
+        log_frame.pack(fill='both', expand=True, pady=(4, 0))
+        vertical = ttk.Scrollbar(log_frame, orient='vertical')
+        horizontal = ttk.Scrollbar(log_frame, orient='horizontal')
+        self.telemetry_log = tk.Text(log_frame, bg=PANEL, fg='#86efac', wrap='none',
+                                     font=('Monospace', 10), height=12, state='disabled',
+                                     xscrollcommand=horizontal.set, yscrollcommand=vertical.set)
+        self.telemetry_log.grid(row=0, column=0, sticky='nsew')
+        vertical.grid(row=0, column=1, sticky='ns')
+        horizontal.grid(row=1, column=0, sticky='ew')
+        vertical.configure(command=self.telemetry_log.yview)
+        horizontal.configure(command=self.telemetry_log.xview)
+        log_frame.rowconfigure(0, weight=1)
+        log_frame.columnconfigure(0, weight=1)
+
+    def update_telemetry(self, state, diagnostics):
+        wall = monotonic()-self.started
+        if wall < self.next_telemetry_wall:
+            return
+        self.next_telemetry_wall = wall+.2
+        line = self.telemetry.append(state, diagnostics, wall)
+        levels, d = state['signal_levels'], state['diagnostics']
+        current = (
+            f"Wall čas: {wall:.3f} s    Simulační čas: {state['time_s']:.6f} s    Pauza: {state['paused']}\n"
+            f"RPM: {state['rpm']:.1f}    Klika: {state['crank_angle_deg']:.2f}°    Cyklus: {state['cycle_angle_deg']:.2f}°\n"
+            f"TPS: {100*state['tps']:.1f} %    MAP: {state['map_kpa']:.2f} kPa    Lambda: {state['lambda_value']:.3f}\n"
+            f"IAT: {state['iat_c']:.1f} °C    CLT: {state['clt_c']:.1f} °C    Zátěž: {state['load_nm']:.2f} Nm\n"
+            f"Dávka: {state['injector_ms']:.3f} ms    Předstih: {state['ignition_deg']:.2f}°    CKP/CMP: {levels['CKP']}/{levels['CMP']}\n"
+            f"Aktivní vstřikovače: {state['injector_active']}    Nabíjené cívky: {state['coil_charging']}\n"
+            f"Poslední vstřikovací pulzy [µs]: {state['last_injection_us']}\n"
+            f"Poslední dwell [µs]: {state['last_dwell_us']}\n"
+            f"Linka: {diagnostics.get('connected','mock')}    Přijato: {diagnostics['received']}    Neplatné zprávy: {diagnostics['invalid']}\n"
+            f"RTT [µs]: {diagnostics.get('rtt_us')}    Offset ECU [µs]: {diagnostics.get('ecu_offset_us')}    Drift [µs]: {diagnostics.get('ecu_drift_us')}\n"
+            f"Ztracené hrany: {d['dropped_events']}    Pozdní události: {d['late_events']}    Chybné povely: {d['rejected_commands']}\n"
+            f"Max. zpoždění [µs]: {d['max_lateness_us']}    Max. wall lag [µs]: {d['max_wall_lag_us']}"
+        )
+        self.current_telemetry.configure(state='normal')
+        self.current_telemetry.delete('1.0', 'end')
+        self.current_telemetry.insert('end', current)
+        self.current_telemetry.configure(state='disabled')
+        self.telemetry_log.configure(state='normal')
+        self.telemetry_log.insert('end', line+'\n')
+        self.log_rows += 1
+        if self.log_rows > self.telemetry.samples.maxlen:
+            self.telemetry_log.delete('1.0', '2.0')
+            self.log_rows -= 1
+        self.telemetry_log.configure(state='disabled')
+        if self.autoscroll.get():
+            self.telemetry_log.see('end')
+        self.log_summary.set(f'Uloženo v paměti: {len(self.telemetry.samples)} / {self.telemetry.total} vzorků')
+
+    def clear_telemetry(self):
+        self.telemetry.clear()
+        self.log_rows = 0
+        self.telemetry_log.configure(state='normal')
+        self.telemetry_log.delete('1.0', 'end')
+        self.telemetry_log.configure(state='disabled')
+        self.log_summary.set('Výpis vymazán · soubor --telemetry pokračuje')
+        self.next_telemetry_wall = 0
+
+    def export_telemetry(self, path):
+        path = Path(path)
+        content = self.telemetry.text() if path.suffix.lower()=='.txt' else self.telemetry.jsonl()
+        path.write_text(content, encoding='utf-8')
+
+    def save_telemetry(self):
+        path = filedialog.asksaveasfilename(parent=self.root, title='Uložit poslední vzorky telemetrie',
+                    defaultextension='.jsonl', initialfile='ecu-telemetrie.jsonl',
+                    filetypes=[('JSON Lines – úplné vzorky','*.jsonl'), ('Textový výpis','*.txt')])
+        if path:
+            try:
+                self.export_telemetry(path)
+            except OSError as exc:
+                messagebox.showerror('Telemetrii se nepodařilo uložit', str(exc), parent=self.root)
 
     def command(self, _=None):
         try:
@@ -119,6 +219,7 @@ class EngineView:
                 self.history.append((frame['time_s'], frame['rpm']))
             self.last_time = frame['simulation_time_us']
             self.last_frame = frame
+            self.update_telemetry(frame, diagnostics)
             link = 'MOCK · bez Wokwi' if self.app.mode == 'mock' else (
                 'WOKWI · připojeno' if diagnostics['connected'] else 'WOKWI · čekám na spojení')
             self.status.set(f"{'PAUZA' if frame['paused'] else 'BĚH'}   |   {link}   |   sim {frame['time_s']:.3f} s")

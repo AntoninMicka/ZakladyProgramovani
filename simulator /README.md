@@ -72,6 +72,38 @@ GUI využívá standardní Tk. Pokud modul chybí, na Ubuntu/Debianu jej doinsta
 příkazem `sudo apt install python3-tk` a spusťte program z desktopového terminálu
 s dostupným displejem. Konzolový režim Tk nepotřebuje.
 
+## Výpisy telemetrie
+
+![Živý výpis telemetrie](docs/telemetry-preview.png)
+
+V okně přepněte na záložku **Telemetrie**. Nahoře je aktuální snímek snímačů,
+výstupů ECU a diagnostiky, dole průběžný textový výpis s wall i simulačním časem.
+Zobrazuje RPM, TPS, MAP, teploty, lambdu, dávku a předstih, polohu kliky,
+CKP/CMP, aktivní kanály, délky vstřikovacích pulzů a dwell, stav spojení,
+RTT a diagnostické čítače. V Mock režimu mají údaje o hodinách ECU hodnotu `None`.
+
+Výpis v okně pořizuje nejvýše 5 vzorků za skutečnou sekundu a uchovává posledních
+1000 vzorků. V pauze je vidět neměnný simulační čas a pokračující wall time.
+Přepínač **Sledovat konec** umožní pročítat starší řádky bez automatického posouvání.
+Tlačítko **Uložit záznamy…** exportuje tento omezený archiv jako úplné JSON Lines
+nebo čitelný `.txt` soubor. **Vymazat výpis** vymaže pouze paměťový archiv.
+
+Pro souvislý záznam celého běhu použijte `--telemetry`; soubor se zapisuje průběžně
+po každém vzorku bridge (výchozí `--rate 20`), i když není záložka otevřená.
+Soubor se při spuštění vytvoří nebo přepíše. GUI ani vymazání jeho výpisu záznam
+nepřeruší. Každý JSON řádek obsahuje `wall_elapsed_s`, `state` a `bridge`.
+
+```bash
+python main.py --gui --speed 0.02 --telemetry /tmp/ecu-beh.jsonl
+# Současný čitelný výpis do terminálu i při otevřeném GUI:
+python main.py --gui --console-telemetry --telemetry /tmp/ecu-beh.jsonl
+# Samostatný konzolový běh vypisuje telemetrii automaticky:
+python main.py --mode mock --duration 10 --telemetry /tmp/ecu-beh.jsonl
+```
+
+Vzorky nejsou záznamem všech hran GPIO: krátké ECU pulzy mohou proběhnout mezi
+vzorky. Pro měření jednotlivých hran slouží časované události a Logic Analyzer/VCD.
+
 ## Komponenty
 
 ```mermaid

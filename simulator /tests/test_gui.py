@@ -42,3 +42,39 @@ class GuiTests(unittest.TestCase):
                     if view.canvas.type(i)=='text']
             self.assertIn('VÁLEC 16',labels)
         finally:view.close();app.close()
+
+    def test_telemetry_panel_bounds_clear_and_export(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        import tkinter as tk
+        from gui import EngineView
+        from telemetry import TelemetryBuffer
+        root=tk.Tk();app=Supervisor();view=EngineView(root,app)
+        try:
+            root.update()
+            view.notebook.select(1)
+            view.clear_telemetry()
+            view.telemetry=TelemetryBuffer(3)
+            for _ in range(6):
+                app.engine.step()
+                view.next_telemetry_wall=0
+                view.update_telemetry(app.engine.snapshot(),dict(app.bridge.metrics))
+            self.assertEqual(len(view.telemetry.samples),3)
+            self.assertEqual(view.log_rows,3)
+            text=view.telemetry_log.get('1.0','end-1c')
+            self.assertEqual(len(text.splitlines()),3)
+            self.assertIn('RPM=',text)
+            self.assertIn('Poslední dwell',view.current_telemetry.get('1.0','end'))
+            with tempfile.TemporaryDirectory() as directory:
+                path=Path(directory)/'samples.jsonl'
+                view.export_telemetry(path)
+                records=[json.loads(line) for line in path.read_text().splitlines()]
+                self.assertEqual(len(records),3)
+                self.assertIn('diagnostics',records[-1]['state'])
+                txt=Path(directory)/'samples.txt';view.export_telemetry(txt)
+                self.assertIn('RPM=',txt.read_text())
+            view.clear_telemetry()
+            self.assertFalse(view.telemetry.samples)
+            self.assertEqual(view.telemetry_log.get('1.0','end-1c'),'')
+        finally:view.close();app.close()

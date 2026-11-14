@@ -7,6 +7,7 @@ from time import monotonic, sleep
 from supervisor import Supervisor
 from model import EngineConfig
 from signals import SignalGenerator
+from telemetry import format_sample
 
 
 def main():
@@ -24,6 +25,7 @@ def main():
     parser.add_argument('--load',type=float,default=12)
     parser.add_argument('--config',type=Path,default=Path(__file__).with_name('engine_config.json'))
     parser.add_argument('--telemetry',type=Path,help='Write JSON Lines telemetry')
+    parser.add_argument('--console-telemetry',action='store_true',help='Print telemetry also while GUI is open')
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     import math
@@ -41,11 +43,14 @@ def main():
         app.engine.model.command(initial)
     except (ValueError,TypeError,KeyError,OSError) as exc:
         parser.error(str(exc))
-    output = args.telemetry.open('w') if args.telemetry else None
+    output = args.telemetry.open('w',encoding='utf-8',buffering=1) if args.telemetry else None
     wall_start = monotonic()
     def record(frame, diagnostics):
+        wall_elapsed = monotonic()-wall_start
+        if not args.gui or args.console_telemetry:
+            print(format_sample(frame,diagnostics,wall_elapsed),flush=True)
         if output:
-            output.write(json.dumps({'wall_elapsed_s':monotonic()-wall_start,
+            output.write(json.dumps({'wall_elapsed_s':wall_elapsed,
                                      'state':frame,'bridge':diagnostics})+'\n')
 
     try:
@@ -64,9 +69,6 @@ def main():
         while monotonic()-start < duration:
             frame = app.bridge.tick()
             diagnostics = app.bridge.diagnostics() if hasattr(app.bridge,'diagnostics') else app.bridge.metrics
-            print(f"sim={frame['time_s']:7.3f}s RPM={frame['rpm']:7.1f} "
-                  f"MAP={frame['map_kpa']:5.1f}kPa lambda={frame['lambda_value']:.2f} "
-                  f"link={diagnostics.get('connected','mock')} lost={frame['diagnostics']['dropped_events']}")
             record(frame,diagnostics)
             deadline += 1/args.rate
             sleep(max(0,min(deadline,start+duration)-monotonic()))
