@@ -40,6 +40,19 @@ stavební prvky; jejich přímé propojení přes RFC2217 v této sestavě je za
 neumožní, nepřesouvat protokol do ECU: pokračovat odděleným podporovaným transportem
 (viz [protokol a alternativy](protocol/README.md)).
 
+## Ovládání přes GUI simulátoru
+
+Z adresáře `simulator ` spusťte `.venv/bin/python main.py --gui` a otevřete záložku
+**Wokwi**. Umí vyhledat CLI, ověřit verzi, sestavit tento projekt, převzít nebo
+skrytě přijmout token a spustit scénář či živou smyčku. Živá smyčka používá CLI
+`--interactive` stdin/stdout; tento backend je oddělený od zde popsané varianty
+RFC2217 ve VS Code. V obou případech zůstává simulační protokol mimo ECU firmware.
+
+Výchozí limit je 6000 ms času Wokwi, mění se v okně. Každé spuštění je výslovná
+uživatelská akce bez automatického opakování. Při ukončení se model pozastaví
+v Mock režimu. VCD má samostatnou cestu `runs/wokwi-*/capture.vcd` viditelnou v GUI.
+Detailní postup a zacházení s tokenem jsou v [hlavním README](../../README.md).
+
 ## Build a spuštění ve VS Code / VSCodium
 
 Z kořene repozitáře:
@@ -51,6 +64,14 @@ python -m pip install -r requirements.txt platformio
 # Oficiální wokwi-cli musí být v PATH:
 python wokwi/hardware/scripts/build.py
 ```
+
+Pokud příkaz `wokwi-cli` chybí, stáhněte jej z
+[oficiálních vydání](https://github.com/wokwi/wokwi-cli/releases): pro Linux
+`aarch64` použijte `linuxstatic-arm64`, pro `x86_64` variantu `linuxstatic-x64`.
+Binární soubor lze přejmenovat na `wokwi-cli`, umístit do `.venv/bin/`
+a nastavit mu spustitelnost (`chmod +x .venv/bin/wokwi-cli`, z adresáře `simulator `).
+V aktivované `.venv` pak ověřte `wokwi-cli --version`. CLI se neinstaluje pomocí
+`requirements.txt` a token sám příkaz do systému nepřidá.
 
 Skript vygeneruje konfiguraci, sestaví ESP32 firmware a WASM a provede lint.
 Samostatně lze provést:

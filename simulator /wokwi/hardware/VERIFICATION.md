@@ -33,6 +33,15 @@ PlatformIO Espressif32 6.9.0 / Arduino ESP32 2.0.17 / Xtensa GCC 8.4.0;
 Atmel AVR 5.1.0 / Arduino AVR 5.2.0 / AVR GCC 7.3.0.
 Build cache byla kopie existujících veřejných toolchain balíčků v `/tmp/ecu-pio-core`.
 
+## GUI ovládání CLI
+
+Záložka Wokwi nově spouští sestavení, scénář a živou smyčku a zobrazuje procesní
+výpis. Na skutečném Tk displeji bylo ověřeno vyhledání instalovaného CLI 0.29.1
+přes `--version`. Živý stdin/stdout transport, potvrzení relace, návrat do Mock,
+zastavení potomků a maskování tokenu ověřují lokální testovací procesy.
+GUI neprovádí automatické opakování Wokwi simulace. Toto není výsledek skutečného
+ESP32/Custom Chip běhu a otevřené body níže zůstávají beze změny.
+
 ## Povinný technický prototyp před přijetím topologie
 
 | Bod ze zadání | Dosaženo nyní | Co musí ověřit skutečný runtime |

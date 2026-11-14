@@ -1,13 +1,14 @@
 # Evidence a akceptace druhé fáze
 
-Ověření 14. 11. 2026: všech 35 Python testů včetně skutečného TCP testu, geometrie vizualizace
-a tří skutečných Tk GUI testů prošlo;
+Ověření 14. 11. 2026: všech 44 Python testů včetně skutečného TCP testu, geometrie vizualizace
+a pěti skutečných Tk GUI testů prošlo;
 prošel také samostatný C host test. Implementace je připravena pro lokální SIL a pro integrační
 ověření s Wokwi. Celá fáze **není zatím akceptována**, protože chybí skutečný běh
 s demonstračním MCU a měření na virtuálních pinech.
 
 | Oblast | Dosažené ověření | Stav |
 | --- | --- | --- |
+| Správa Wokwi CLI v GUI | skutečné okno, ověření instalovaného CLI; testovací procesy pro scénář, živý přenos, zastavení a maskování tokenu | ověřeno lokálně; bez runtime ESP32 |
 | Výpis telemetrie | formátování, omezení historie, nezávislé snímky, skutečný Tk panel a export JSONL/TXT | ověřeno lokálně |
 | Živá vizualizace | skutečný běh Tk okna, ovládání plynu/zátěže/pauzy/rychlosti a 16 válců | ověřeno lokálně |
 | Model, virtuální hodiny, samostatné vlákno | Python testy + skutečný CLI Mock | ověřeno lokálně |

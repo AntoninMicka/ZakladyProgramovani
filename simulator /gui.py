@@ -7,6 +7,7 @@ from tkinter import ttk, filedialog, messagebox
 from pathlib import Path
 from telemetry import TelemetryBuffer
 from visualization import cylinder_phase, piston_position
+from wokwi_gui import WokwiPanel
 
 BG = '#0f172a'
 PANEL = '#1e293b'
@@ -71,6 +72,9 @@ class EngineView:
         notebook.add(telemetry_page, text='Telemetrie')
         self.notebook = notebook
         self.build_telemetry(telemetry_page)
+        wokwi_page = ttk.Frame(notebook, padding=12)
+        notebook.add(wokwi_page, text='Wokwi')
+        self.wokwi_panel = WokwiPanel(wokwi_page, app)
         scrollbar = ttk.Scrollbar(body, orient='vertical')
         scrollbar.pack(side='right', fill='y')
         self.canvas = tk.Canvas(body, bg=BG, highlightthickness=0, yscrollcommand=scrollbar.set)
@@ -78,8 +82,8 @@ class EngineView:
         scrollbar.configure(command=self.canvas.yview)
         footer = ttk.Frame(root, padding=(18, 8, 18, 12))
         footer.pack(fill='x', side='bottom', before=notebook)
-        ttk.Label(footer, text='Fáze válců = kinematické schéma. Pro čitelný pohyb zvolte rychlost 0.02×.',
-                  foreground=MUTED).pack(anchor='w')
+        self.display_hint = tk.StringVar(value='Fáze válců = kinematické schéma. Pro čitelný pohyb zvolte rychlost 0.02×.')
+        ttk.Label(footer, textvariable=self.display_hint, foreground=MUTED).pack(anchor='w')
         ttk.Label(footer, text='CKP/CMP = vzor podle úhlu hostitele; přesnost pinů Wokwi tím není měřena.',
                   foreground=MUTED).pack(anchor='w')
         self.timer = root.after(0, self.refresh)
@@ -200,8 +204,13 @@ class EngineView:
         if self.closed:
             return
         self.closed = True
-        self.root.after_cancel(self.timer)
-        self.root.destroy()
+        try:
+            self.root.after_cancel(self.timer)
+            self.root.destroy()
+        except tk.TclError:
+            pass
+        finally:
+            self.wokwi_panel.close()
 
     def text(self, x, y, text, size=12, color=TEXT, anchor='nw', bold=False):
         return self.canvas.create_text(x, y, text=text, fill=color, anchor=anchor,
@@ -214,7 +223,9 @@ class EngineView:
             self.close()
             return
         try:
-            frame = self.app.bridge.tick()
+            self.wokwi_panel.poll()
+            frame = ({'type':'sensors',**self.app.engine.snapshot()} if self.wokwi_panel.busy
+                     else self.app.bridge.tick())
             diagnostics = (self.app.bridge.diagnostics() if hasattr(self.app.bridge, 'diagnostics')
                            else dict(self.app.bridge.metrics))
             if self.on_frame:
@@ -225,9 +236,16 @@ class EngineView:
                 self.history.append((frame['time_s'], frame['rpm']))
             self.last_time = frame['simulation_time_us']
             self.last_frame = frame
+            self.pause_button.configure(text='Pokračovat' if frame['paused'] else 'Pozastavit')
+            current_speed = f'{self.app.engine.speed:g}'
+            if self.speed.get() != current_speed:
+                self.speed.set(current_speed)
             self.update_telemetry(frame, diagnostics)
             link = 'MOCK · bez Wokwi' if self.app.mode == 'mock' else (
                 'WOKWI · připojeno' if diagnostics['connected'] else 'WOKWI · čekám na spojení')
+            self.display_hint.set('Wokwi má vlastní hodiny. Pauza a rychlost ovládají pouze model v Pythonu.'
+                                  if self.app.mode == 'wokwi' else
+                                  'Fáze válců = kinematické schéma. Pro čitelný pohyb zvolte rychlost 0.02×.')
             self.status.set(f"{'PAUZA' if frame['paused'] else 'BĚH'}   |   {link}   |   sim {frame['time_s']:.3f} s")
             self.draw(frame, diagnostics)
         except Exception:
@@ -346,7 +364,10 @@ def run_gui(app, rate=20, on_frame=None, duration=None):
         except tk.TclError:
             pass
     root.report_callback_exception = failed
-    EngineView(root, app, rate, on_frame, duration)
-    root.mainloop()
+    view = EngineView(root, app, rate, on_frame, duration)
+    try:
+        root.mainloop()
+    finally:
+        view.close()
     if errors:
         raise errors[0]

@@ -72,6 +72,48 @@ GUI využívá standardní Tk. Pokud modul chybí, na Ubuntu/Debianu jej doinsta
 příkazem `sudo apt install python3-tk` a spusťte program z desktopového terminálu
 s dostupným displejem. Konzolový režim Tk nepotřebuje.
 
+## Spuštění Wokwi přímo v GUI
+
+![Ovládání Wokwi v GUI](docs/wokwi-gui-preview.png)
+
+```bash
+cd 'simulator '
+.venv/bin/python main.py --gui
+```
+
+V záložce **Wokwi** aplikace najde CLI v `.venv/bin` nebo `PATH`. Lze také vybrat
+jiný soubor CLI a projekt s `wokwi.toml`. Výchozí projekt je izolovaný ESP32 profil
+`wokwi/hardware`.
+
+1. **Ověřit CLI** zobrazí verzi bez spuštění simulace.
+2. **Sestavit firmware a chip** spustí projektový build; vyžaduje PlatformIO a Wokwi CLI.
+3. Token se převezme z `WOKWI_CLI_TOKEN` procesu GUI. Pokud jste jej exportovali
+   v terminálu, spusťte GUI ze stejného terminálu. Jinak jej lze zadat do skrytého
+   pole pro jedno spuštění. **Získat token…** otevře oficiální Wokwi CI dashboard.
+   Pole se po předání vymaže; token se neukládá a výpis jej maskuje.
+4. Zvolte **Prototyp (scénář)** pro `tests/prototype.yaml` nebo **Živá smyčka motoru**
+   pro propojení modelu a virtuální ECU, nastavte limit v milisekundách virtuálního
+   času (výchozí 6000) a stiskněte **Spustit Wokwi**.
+5. **Zastavit** ukončí vlastní CLI proces. Zavření GUI ukončí i jeho pracovní vlákna
+   a podprocesy. Po skončení nebo chybě se simulace automaticky neopakuje.
+
+CLI výpis a návratový kód jsou přímo v záložce. Každý běh dostane vlastní
+`runs/wokwi-*/capture.vcd` uvnitř vybraného projektu; cesta je v okně. Předchozí
+záznam se tím nepřepisuje. Výpis má omezenou historii 1000 řádků a sleduje ztráty.
+Spuštění může čerpat Wokwi CI kvótu, proto vždy vyžaduje stisknutí tlačítka.
+
+Živý režim používá dokumentovaný [wokwi-cli --interactive](https://docs.wokwi.com/wokwi-ci/cli-usage): stav motoru jde na stdin,
+serial JSON z stdout do samostatné omezené fronty bridge. CLI diagnostika zůstává
+ve výpisu. Nevyžaduje spuštění druhého RFC2217 serveru. Model začíná novým virtuálním
+časem při rychlosti 1× a pokračuje až po platném potvrzení stejné hardware relace.
+Po skončení CLI se vrátí do **pozastaveného Mock režimu**; tlačítkem **Pokračovat**
+lze pokračovat bez Wokwi. Scénář používá vlastní pevné stavy a s modelem se nemíchá.
+
+Pauza a změna rychlosti modelu nepozastaví hodiny Wokwi. Pro živou smyčku používejte
+1× a případné přerušení řešte tlačítkem **Zastavit**. GUI integrace byla ověřena se
+skutečnými lokálními testovacími procesy; potvrzení konkrétního ESP32/Custom Chip
+projektu ve Wokwi stále vyžaduje [runtime ověření](wokwi/hardware/VERIFICATION.md).
+
 ## Výpisy telemetrie
 
 ![Živý výpis telemetrie](docs/telemetry-preview.png)
