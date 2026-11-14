@@ -124,6 +124,13 @@ class Engine(Thread):
                 break
         return result
 
+    def set_speed(self, speed):
+        if not 0 < speed <= 1:
+            raise ValueError('speed must be in (0,1]')
+        with self.lock:
+            self.speed = speed
+        self.wake.set()
+
     def pause(self):
         with self.lock:
             self.paused = True
@@ -148,7 +155,13 @@ class Engine(Thread):
 
     def run(self):
         deadline = monotonic()
+        previous_speed = self.speed
         while not self.stop_event.is_set():
+            with self.lock:
+                speed = self.speed
+            if speed != previous_speed:
+                deadline = monotonic()
+                previous_speed = speed
             self.step()
             with self.lock:
                 paused = self.paused
@@ -157,7 +170,7 @@ class Engine(Thread):
                 self.wake.clear()
                 deadline = monotonic()
                 continue
-            deadline += self.dt/self.speed
+            deadline += self.dt/speed
             lag = max(0,round((monotonic()-deadline)*1e6))
             with self.lock:
                 self.diagnostics['wall_lag_us'] = lag

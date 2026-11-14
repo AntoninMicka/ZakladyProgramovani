@@ -88,5 +88,9 @@ class EngineModel:
                 'crank_angle_deg': self.angle % 360, 'cycle_angle_deg': self.angle % 720,
                 'lambda_value': max(.6,min(2,3/max(self.injector_ms,.1))),
                 'cylinders': self.config.cylinders,
+                'load_nm': self.load_nm, 'injector_ms': self.injector_ms,
+                'ignition_deg': self.ignition_deg, 'fixed_rpm': self.target_rpm,
+                'injector_active': sorted(self.open_injectors),
+                'coil_charging': sorted(self.charging),
                 'last_injection_us': dict(self.last_injection_us),
                 'last_dwell_us': dict(self.last_dwell_us)}

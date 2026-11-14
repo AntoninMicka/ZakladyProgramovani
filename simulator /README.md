@@ -32,6 +32,46 @@ setrvačnosti a zatížení. `--load` je moment v Nm, `--throttle` rozsah 0–1.
 Výpis ukazuje simulační čas, RPM, MAP, lambdu, stav linky a ztracené hrany.
 `Ctrl+C` ukončí pracovní vlákna; nedostupný server nezastaví model.
 
+## Živá vizualizace motoru
+
+Z adresáře `simulator ` spusťte:
+
+```bash
+python main.py --gui --mode mock --speed 0.02
+```
+
+![Živé okno simulátoru motoru](docs/engine-preview.png)
+
+Okno ukazuje pohyb pístů a kliky, názorné fáze čtyřtaktu, RPM, MAP, lambdu,
+délku dávky, úhel kliky a historii otáček v simulačním čase. Pro čtyřválec
+zobrazuje pořadí 1–3–4–2; fáze jsou odvozené z úhlu, nikoli z modelu spalování.
+CKP/CMP panel zobrazuje úhlový vzor a aktuální polohu hostitelského motoru.
+
+Posuvníky mění plyn a zatížení přes frontu povelů. Tlačítko pozastaví hostitelský
+motor a přepínač rychlosti umožní 1×, 0.2×, 0.05× nebo 0.02×. Zpomalení platí pro
+skutečný simulační čas, ne pouze pro animaci. Pro viditelný pracovní cyklus použijte
+0.02×; při 1× mohou pohyby kvůli obnovovací frekvenci obrazovky zdánlivě stát či couvat.
+Režim `--rpm` drží otáčky pevně, takže při něm zátěž otáčky nezmění.
+
+GUI se zavřením okna ukončí i pracovní vlákna. Bez `--duration` běží až do zavření;
+`--gui --duration 30` je ukončí po 30 skutečných sekundách. Telemetrii lze stále
+ukládat pomocí `--telemetry`. Pro menší obrazovky je obsah posuvný.
+
+Pro spojení s Wokwi:
+
+```bash
+python main.py --gui --mode wokwi --baudrate 1000000
+```
+
+Pauza ani zpomalení hostitele neřídí hodiny MCU ve Wokwi. Okno ukazuje stav linky,
+aktivní vstřikovače, nabíjené cívky a RTT; v Mock režimu jsou označené pouze řízené
+dávky, protože Mock nevytváří jednotlivé ECU pulzy. Krátký pulz může mezi dvěma
+obnoveními okna proběhnout celý — měření patří časovým značkám a VCD.
+
+GUI využívá standardní Tk. Pokud modul chybí, na Ubuntu/Debianu jej doinstalujte
+příkazem `sudo apt install python3-tk` a spusťte program z desktopového terminálu
+s dostupným displejem. Konzolový režim Tk nepotřebuje.
+
 ## Komponenty
 
 ```mermaid
@@ -57,6 +97,7 @@ flowchart LR
 - `transport.py`: nezávislé `open/read/write/close`, pracovní vlákno a reconnect.
 - `bridge.py`: překlad aplikačních zpráv, Mock a měření RTT/offsetu hodin.
 - `supervisor.py`: start, pause, resume, restart, close; žádný model spalování.
+- `gui.py`, `visualization.py`: živý Tk pohled a oddělená geometrie klikového mechanismu.
 
 Pro nový backend stačí implementovat transportní rozhraní a předat
 `transport_factory` do `RFC2217Bridge`; model ani hodiny se nemění.
@@ -83,6 +124,17 @@ Původní CLI `--mode mock/wokwi --url --duration --throttle --rate` zůstává 
 `Engine.command()` je nyní fronta aplikovaná v následujícím kroku. Staré JSON povely
 `{"type":"actuators",...}` nejsou na drátu přijímány: demo používá úplnou obálku v1.
 Přímé programové `MockBridge.receive()` zachovává starý tvar kvůli původním experimentům.
+
+## Schéma zapojení
+
+![Zapojení Arduino Mega, Custom Chipu a Logic Analyzeru](docs/wiring.svg)
+
+[Otevřít diagram ve větší velikosti](docs/wiring.svg) ·
+[Nativní zapojení pro Wokwi](wokwi/diagram.json)
+
+Šipky označují směr signálů; čísla kanálů 0–3 odpovídají čtyřem válcům.
+UART0 propojuje MCU s Pythonem a UART1 s Custom Chipem. Logic Analyzer
+sleduje CKP, CMP, INJ0 a COIL0 pro export a kontrolu VCD.
 
 ## Wokwi demonstrační projekt
 
@@ -134,6 +186,8 @@ Z adresáře `simulator `:
 PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v
 # Navíc skutečný TCP server jen na loopbacku; potřebuje oprávnění otevřít socket:
 ECU_TEST_TCP=1 PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v
+# Navíc skutečné GUI testy na dostupném displeji:
+ECU_TEST_GUI=1 PYTHONDONTWRITEBYTECODE=1 python -m unittest discover -s tests -v
 # Hostitelský C test skutečného zdroje chipu s náhradami Wokwi API:
 clang -std=c11 -Wall -Wextra -Werror -Wno-unknown-attributes -Wno-unused-function \
   -I wokwi tests/chip_host_test.c -lm -o /tmp/ecu-chip-test

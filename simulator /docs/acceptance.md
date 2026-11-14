@@ -1,12 +1,14 @@
 # Evidence a akceptace druhé fáze
 
-Ověření 14. 11. 2026: všech 26 Python testů včetně skutečného TCP testu prošlo;
+Ověření 14. 11. 2026: všech 31 Python testů včetně skutečného TCP testu, geometrie vizualizace
+a dvou skutečných Tk GUI testů prošlo;
 prošel také samostatný C host test. Implementace je připravena pro lokální SIL a pro integrační
 ověření s Wokwi. Celá fáze **není zatím akceptována**, protože chybí skutečný běh
 s demonstračním MCU a měření na virtuálních pinech.
 
 | Oblast | Dosažené ověření | Stav |
 | --- | --- | --- |
+| Živá vizualizace | skutečný běh Tk okna, ovládání plynu/zátěže/pauzy/rychlosti a 16 válců | ověřeno lokálně |
 | Model, virtuální hodiny, samostatné vlákno | Python testy + skutečný CLI Mock | ověřeno lokálně |
 | Úhel, 60-2, CMP 720°, změny RPM | deterministické virtuální testy | ověřeno lokálně |
 | Vstřikování, charge/spark, budoucí/pozdní události | automatické testy | ověřeno lokálně |

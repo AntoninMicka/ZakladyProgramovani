@@ -81,4 +81,6 @@ Chyba připojení nikdy nevolá blokující I/O z modelu.
 Budoucí přesný režim vyžaduje ověřený backend pro řízení MCU času nebo lokální
 přehrávač předem datovaných bloků s handshake epochy, lookahead, potvrzením přijetí
 a odmítáním opožděných událostí. Takový režim zde není vydáván za hotový HIL.
-CAN/OBD, klepání, emise, GUI, kalibrační mapy a model startéru jsou mimo tuto fázi.
+CAN/OBD, klepání, emise, kalibrační mapy a model startéru zůstávají mimo tuto fázi.
+Na následnou žádost byl doplněn hostitelský Tk pohled; jeho animace ani grafické
+indikátory nejsou měřením časování pinů Wokwi.
