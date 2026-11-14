@@ -1,0 +1,174 @@
+{
+  "version": 1,
+  "author": "ECU SIL",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-arduino-mega",
+      "id": "ecu",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-engine-signals",
+      "id": "engine",
+      "top": 0,
+      "left": 460,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic",
+      "top": -180,
+      "left": 450,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "ecu:18",
+      "engine:RX",
+      "green",
+      []
+    ],
+    [
+      "engine:TX",
+      "ecu:19",
+      "green",
+      []
+    ],
+    [
+      "engine:CKP",
+      "ecu:2",
+      "blue",
+      []
+    ],
+    [
+      "engine:CMP",
+      "ecu:3",
+      "purple",
+      []
+    ],
+    [
+      "engine:VCC",
+      "ecu:5V",
+      "red",
+      []
+    ],
+    [
+      "engine:GND",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "engine:CKP",
+      "logic:D0",
+      "blue",
+      []
+    ],
+    [
+      "engine:CMP",
+      "logic:D1",
+      "purple",
+      []
+    ],
+    [
+      "ecu:22",
+      "logic:D2",
+      "green",
+      []
+    ],
+    [
+      "ecu:26",
+      "logic:D3",
+      "orange",
+      []
+    ],
+    [
+      "logic:GND",
+      "ecu:GND.1",
+      "black",
+      []
+    ],
+    [
+      "engine:MAP",
+      "ecu:A0",
+      "orange",
+      []
+    ],
+    [
+      "engine:TPS",
+      "ecu:A1",
+      "orange",
+      []
+    ],
+    [
+      "engine:IAT",
+      "ecu:A2",
+      "orange",
+      []
+    ],
+    [
+      "engine:CLT",
+      "ecu:A3",
+      "orange",
+      []
+    ],
+    [
+      "engine:LAMBDA",
+      "ecu:A4",
+      "orange",
+      []
+    ],
+    [
+      "ecu:22",
+      "engine:INJ0",
+      "green",
+      []
+    ],
+    [
+      "ecu:26",
+      "engine:COIL0",
+      "orange",
+      []
+    ],
+    [
+      "ecu:23",
+      "engine:INJ1",
+      "green",
+      []
+    ],
+    [
+      "ecu:27",
+      "engine:COIL1",
+      "orange",
+      []
+    ],
+    [
+      "ecu:24",
+      "engine:INJ2",
+      "green",
+      []
+    ],
+    [
+      "ecu:28",
+      "engine:COIL2",
+      "orange",
+      []
+    ],
+    [
+      "ecu:25",
+      "engine:INJ3",
+      "green",
+      []
+    ],
+    [
+      "ecu:29",
+      "engine:COIL3",
+      "orange",
+      []
+    ]
+  ]
+}

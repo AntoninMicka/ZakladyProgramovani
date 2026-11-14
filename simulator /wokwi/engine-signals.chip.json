@@ -1,0 +1,5 @@
+{
+  "name": "Engine Signals 60-2",
+  "author": "ECU SIL teaching project",
+  "pins": ["VCC", "GND", "RX", "TX", "CKP", "CMP", "MAP", "TPS", "IAT", "CLT", "LAMBDA", "INJ0", "INJ1", "INJ2", "INJ3", "COIL0", "COIL1", "COIL2", "COIL3"]
+}

@@ -1,0 +1,4 @@
+{
+  "engine": {"cylinders": 4, "initial_rpm": 900, "inertia": 0.25, "max_rpm": 7500},
+  "signals": {"teeth": 60, "missing": 2, "cmp_positions": [0], "cmp_width": 12}
+}
