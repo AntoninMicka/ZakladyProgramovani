@@ -1,0 +1,5 @@
+
+**/__pycache__/
+**/*.pyc
+**/.cache/clangd/
+**/compile_commands.json
