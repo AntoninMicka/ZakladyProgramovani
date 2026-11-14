@@ -89,3 +89,10 @@ Tk test aplikuje změnu s testovacím CLI, kontroluje nový PID/revizi i zachov�
 starého procesu při chybě překladu. Žádný z těchto důkazů nenahrazuje skutečný běh
 ESP32/AVR a virtuálních pinů ve Wokwi; ten zůstává otevřený dle
 [akceptace](acceptance.md) a [hardware evidence](../wokwi/hardware/VERIFICATION.md).
+
+## Navazující sjednocení Mock ECU
+
+Mock nyní vykonává stejný `ecu_controller.h` jako firmware, přes nativní C++ adaptér.
+Podrobnosti, závislosti a použití editoru pro Mock popisuje hlavní README.
+Aktuální sada aplikace má 61 testů (včetně šesti Tk testů), hardware sada 15.
+Původní Python regulace dávky v Mock byla odstraněna; společná demo ECU má pevnou dávku.

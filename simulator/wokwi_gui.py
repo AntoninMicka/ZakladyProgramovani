@@ -26,6 +26,9 @@ class WokwiPanel:
         self.app = app
         self.runner = runner or WokwiProcess()
         self.builder = WokwiProcess()
+        self.mock_built_revision = None
+        self.mock_thread = None
+        self.mock_results = queue.Queue(1)
         self.build_context = None
         self.pending_apply = None
         self.built_revision = None
@@ -285,11 +288,70 @@ class WokwiPanel:
             self.status.set(str(exc))
             return False
 
+    @property
+    def mock_busy(self):
+        return self.mock_thread is not None
+
+    def build_mock(self, apply_after=False):
+        """Překladač běží mimo Tk vlákno; běžící ECU vymění až hlavní poll()."""
+        if self.mock_busy or self.builder.busy or self.build_context or self.pending_apply:
+            self.build_status = "Předchozí sestavení ještě probíhá."
+            return
+        from native_ecu import NativeEcu
+
+        project = Path(self.project.get()).expanduser().resolve()
+        revision = source_revision(project)
+        config, signals = self.app.engine.config, self.app.engine.signals
+        self.build_status = "Sestavuji společný C++ řadič pro Mock; simulace pokračuje."
+        self.build_lines.clear()
+
+        def compile_controller():
+            try:
+                controller = NativeEcu(config, signals, project)
+                self.mock_results.put((controller, ""))
+            except Exception as exc:
+                self.mock_results.put((None, str(exc)))
+
+        self.mock_context = (project, revision, apply_after, config, signals)
+        self.mock_thread = Thread(target=compile_controller, name="mock-ecu-build", daemon=False)
+        self.mock_thread.start()
+
+    def poll_mock(self):
+        try:
+            controller, error = self.mock_results.get_nowait()
+        except queue.Empty:
+            return
+        self.mock_thread.join()
+        self.mock_thread = None
+        project, revision, apply_after, config, signals = self.mock_context
+        try:
+            if error:
+                raise RuntimeError(error)
+            if (
+                project != Path(self.project.get()).expanduser().resolve()
+                or source_revision(project) != revision
+                or self.app.engine.config != config
+                or self.app.engine.signals is not signals
+            ):
+                raise RuntimeError("Projekt nebo vstupy se změnily. Sestavte Mock ECU znovu.")
+            self.mock_built_revision = controller.revision
+            self.build_status = "Mock ECU sestavena: " + controller.revision[:10]
+            if apply_after:
+                self.app.apply_mock_ecu(controller)
+                controller = None  # Vlastnictví nyní patří bridge.
+                self.build_status += " · použita, virtuální čas obnoven od nuly."
+        except (OSError, ValueError, RuntimeError) as exc:
+            self.build_status = str(exc) + " Dosavadní Mock ECU nebyla změněna."
+        finally:
+            if controller is not None:
+                controller.close()
+
     def build(self, apply_after=False):
         """Build běží odděleně: neúspěch nesmí odstavit starý firmware."""
         try:
             if (
-                self.builder.busy
+                self.mock_busy
+                or self.builder.busy
                 or self.build_context is not None
                 or self.pending_apply is not None
             ):
@@ -382,6 +444,9 @@ class WokwiPanel:
             self.status.set(str(exc))
 
     def stop(self):
+        if self.mock_busy:
+            project, revision, _, config, signals = self.mock_context
+            self.mock_context = (project, revision, False, config, signals)
         if self.build_context:
             self.build_context["apply"] = False
         self.pending_apply = None
@@ -403,6 +468,7 @@ class WokwiPanel:
     def poll(self):
         if self.closed:
             return
+        self.poll_mock()
         self.poll_build()
         while True:
             try:
@@ -516,4 +582,12 @@ class WokwiPanel:
                 raise RuntimeError("Změna backendu se neukončila")
         self.runner.close()
         self.builder.close()
+        if self.mock_thread is not None:
+            self.mock_thread.join(50)
+            if self.mock_thread.is_alive():
+                raise RuntimeError("Překlad Mock ECU se neukončil")
+            controller, _ = self.mock_results.get_nowait()
+            if controller is not None:
+                controller.close()
+            self.mock_thread = None
         self._session_token = ""

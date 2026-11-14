@@ -115,8 +115,31 @@ class Supervisor:
                 self.mode = "mock"
                 self.transport_factory = None
                 self.bridge = MockBridge(self.engine)
+                self.bridge.start()
                 raise
             if not paused:
+                self.engine.resume()
+
+    def apply_mock_ecu(self, controller):
+        """Hotový překlad vyměníme až pod zámkem. Chyba překladu sem vůbec nedojde."""
+        with self.lifecycle_lock, self.engine.lock:
+            if self.mode != "mock" or self.closing.is_set():
+                raise RuntimeError("Mock už není aktivní; nová ECU nebyla použita.")
+            previous = self.engine.snapshot()
+            was_paused = self.engine.paused
+            self.engine.pause()
+            self.bridge.close()
+            self.engine.reset()
+            self.engine.model.command(
+                {
+                    "throttle": previous["throttle"],
+                    "load_nm": previous["load_nm"],
+                    "rpm": previous["fixed_rpm"],
+                }
+            )
+            self.bridge = MockBridge(self.engine, controller)
+            self.bridge.start()
+            if not was_paused:
                 self.engine.resume()
 
     def restart(self):

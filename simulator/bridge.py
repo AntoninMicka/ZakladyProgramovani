@@ -120,22 +120,39 @@ class Bridge:
 
 
 class MockBridge(Bridge):
-    """Uzavřená smyčka bez sítě; stejné aplikační rozhraní jako ECU."""
+    """Lokální GPIO/časovačový adaptér stejného C++ řadiče jako ve firmware."""
+
+    def __init__(self, engine, controller=None):
+        super().__init__(engine)
+        from native_ecu import NativeEcu
+
+        self.controller = controller or NativeEcu(engine.config, engine.signals)
+        self.started = False
+
+    def start(self):
+        with self.engine.lock:
+            self.controller.reset(self.engine.clock.time_us)
+            self.engine.local_ecu = self.controller
+            self.started = True
 
     def tick(self):
-        state = self.engine.snapshot()
-        injection = max(0.5, min(6, 2.7 + 0.002 * (1200 - state["rpm"])))
-        self.receive(
-            message(
-                "actuators",
-                self.sequence,
-                state["simulation_time_us"],
-                {"injector_ms": injection, "ignition_deg": 15},
-                source="mock",
-            )
-        )
-        self.sequence += 1
+        if not self.started:
+            self.start()
+        self.diagnostics()
         return self.sensors()
+
+    def diagnostics(self):
+        with self.engine.lock:
+            ecu = self.controller.diagnostics()
+            self.metrics["received"] = ecu["events"]
+            return {**self.metrics, "controller": ecu}
+
+    def close(self):
+        with self.engine.lock:
+            if self.engine.local_ecu is self.controller:
+                self.engine.local_ecu = None
+            self.controller.close()
+            self.started = False
 
 
 class RFC2217Bridge(Bridge):

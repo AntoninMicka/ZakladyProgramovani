@@ -40,13 +40,13 @@ struct EcuController {
   // errors: počet zjištěných nesrovnalostí; není to počet všech možných poruch.
   uint32_t last_ckp = 0, normal_us = 0, cam_time = 0, edges = 0, cam_edges = 0, errors = 0;
 
-  // Pole je několik políček se společným názvem. Zde má každé pole čtyři políčka.
-  // Počítač je čísluje od NULY: [0] je první válec, [3] je čtvrtý.
+  // Pole je několik políček se společným názvem. Počet políček určuje ECU_CYLINDERS (výchozí jsou
+  // čtyři). Počítač je čísluje od NULY: [0] je první válec, [3] je čtvrtý.
   // ..._end uchovává čas, KDY má příslušný výstup skončit.
-  uint32_t injector_end[4] = {}, coil_end[4] = {};
+  uint32_t injector_end[ECU_CYLINDERS] = {}, coil_end[ECU_CYLINDERS] = {};
   // bool má jen dvě hodnoty: true = ano, false = ne.
   // ..._on říká, zda je vstřikovač právě otevřený nebo cívka právě nabíjená.
-  bool injector_on[4] = {}, coil_on[4] = {};
+  bool injector_on[ECU_CYLINDERS] = {}, coil_on[ECU_CYLINDERS] = {};
 
   // Na začátku nic o poloze motoru nevíme. Příznaky se postupně mění na true:
   // have_ckp  = máme alespoň první údaj z klikového hřídele;

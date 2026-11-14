@@ -151,7 +151,9 @@ class CoreTests(unittest.TestCase):
                 b.tick()
             e.step()
         self.assertGreater(e.snapshot()["rpm"], 900)
-        self.assertLess(abs(e.snapshot()["rpm"] - 1200), 300)
+        self.assertEqual(set(e.snapshot()["last_injection_us"]), {0, 1, 2, 3})
+        self.assertEqual(set(e.snapshot()["last_injection_us"].values()), {3000})
+        b.close()
         self.assertEqual(b.metrics["invalid"], 0)
 
     def test_thread_shutdown(self):

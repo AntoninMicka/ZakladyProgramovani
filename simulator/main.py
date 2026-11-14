@@ -83,7 +83,7 @@ def main():
             initial["rpm"] = args.rpm
         # Validace před spuštěním vláken.
         app.configure_initial(initial)
-    except (ValueError, TypeError, KeyError, OSError) as exc:
+    except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         parser.error(str(exc))
     output = args.telemetry.open("w", encoding="utf-8", buffering=1) if args.telemetry else None
     signals_output = (

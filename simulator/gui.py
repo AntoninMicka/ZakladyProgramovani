@@ -503,7 +503,8 @@ class EngineView:
             MUTED,
         )
         if self.app.mode == "mock":
-            detail = "Mock řídí délku dávky; jednotlivé vstřikovací a zapalovací pulzy negeneruje."
+            ecu = diagnostics.get("controller", {})
+            detail = f"Mock · společná C++ ECU · synchronizace {ecu.get('synced', False)} · revize {ecu.get('revision', '—')[:10]} · pulzy {ecu.get('events', 0)}"
         else:
             detail = f"Aktivní vstřikovače: {state['injector_active']}   ·   nabíjené cívky: {state['coil_charging']}   ·   RTT: {diagnostics['rtt_us']} µs"
         self.text(12, info_y + 44, detail, 10, MUTED)

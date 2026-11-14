@@ -32,24 +32,57 @@ setrvačnosti a zatížení. `--load` je moment v Nm, `--throttle` rozsah 0–1.
 Výpis ukazuje simulační čas, RPM, MAP, lambdu, stav linky a ztracené hrany.
 `Ctrl+C` ukončí pracovní vlákna; nedostupný server nezastaví model.
 
+## Mock používá stejnou ECU jako firmware
+
+Python fyzikální model -> hrany CKP/CMP -> **EcuController v C++** -> vstřik/coil
+pulzy -> Python model. Řadič zůstává v jediném zdrojovém souboru
+`wokwi/hardware/firmware/include/ecu_controller.h`. Malý adaptér
+`native/ecu_host.cpp` mu dodává vstupy a virtuální časovač (výchozí krok 25 µs).
+Délky skutečně dokončených pulzů a naměřený předstih ovlivňují model motoru.
+
+Při prvním spuštění se automaticky sestaví nativní knihovna do ignorovaného
+`.cache/native-ecu/`; další spuštění použijí cache podle hashů zdroje a konfigurace.
+Na Linuxu je potřeba C++ překladač (`sudo apt install g++`, případně `clang++`).
+Hodnoty dávky/dwell/předstihu se načtou z `wokwi/hardware/config/engine.json`,
+geometrie CKP/CMP a počet válců z aktivního Python modelu. Výchozí pořadí čtyřválce
+je 1–3–4–2. Není zde druhá Python implementace řídicího algoritmu.
+
+Demo ECU má pevnou dávku 3 ms a dwell 2 ms, ne původní Mock regulaci k 1200 RPM.
+Otáčky při volné dynamice závisejí na plynu a zatížení. `--rpm 1000` zapne stolici.
+`--rate` řídí jen četnost výpisů/GUI, nikoli činnost ECU. Pauza zastaví také lokální
+ECU a `--speed` zpomalí model i ECU společně. CKP a CMP se pro ECU generují přímo,
+bez závislosti na volitelné záznamové frontě hran.
+
+Časy hran uvnitř integračního kroku jsou odhadem z předpovězeného pohybu kliky.
+Model pak integruje stejný krok po jednotlivých výstupních událostech ECU. Menší
+`--step-us` zpřesní vazbu při změnách RPM. Nativní běh ověřuje řídicí logiku;
+nenapodobuje instrukce MCU, latence ISR, ADC ani časování virtuálních pinů Wokwi.
+V telemetrii `bridge.controller` jsou revize, odhad RPM, synchronizace a počet událostí.
+
 ## Editor ECU za běhu
 
-Spusťte `python main.py --gui`. V záložce **Wokwi** vyberte hardwarový projekt
-`wokwi/hardware`, CLI a token. Samostatná záložka **Editor ECU** obsahuje C/C++
+Spusťte `python main.py --gui`. Samostatná záložka **Editor ECU** obsahuje C/C++
 zdroje firmware, čísla řádků, zvýraznění syntaxe a výpis překladače.
 
-- **Uložit** (Ctrl+S) uloží soubor; běžící firmware pokračuje se starým kódem.
-- **Sestavit** přeloží uložené zdroje a chip vedle běžící simulace.
-- **Použít v simulaci** uloží, sestaví a po úspěchu ukončí starý Wokwi proces.
-  Spustí nový firmware od simulačního času nula a počká na potvrzení komunikace.
-  Jde o restart firmware; stav CPU ani rozpracované pulzy se nepřenášejí.
+- **Uložit** (Ctrl+S) uloží soubor; běžící ECU pokračuje se starým kódem.
+- **Sestavit** přeloží uložené zdroje vedle běžící simulace.
+- **Použít v simulaci** uloží, sestaví a po úspěchu obnoví aktivní backend od
+  simulačního času nula. Plyn, zátěž a režim stolice se zachovají; otevřené pulzy se zruší.
 
-Při chybě překladu dosavadní simulace pokračuje. Změní-li se zdroj během překladu,
-artefakt se nepoužije. Editor rozlišuje neuložený obsah, uloženou, sestavenou a
-procesu předanou revizi. Změnu souboru jiným editorem při ukládání odmítne.
-Překlad vyžaduje PlatformIO a projektový `scripts/build.py`; aplikování také
-Wokwi token a může čerpat CI kvótu. Legacy Mega projekt lze editovat, ale integrované
-sestavení/aplikování je určené hardwarovému projektu s tímto build skriptem.
+V **Mock** režimu editor překládá společný `firmware/include/ecu_controller.h`
+pomocí lokálního `g++` nebo `clang++`. Nepotřebuje Wokwi CLI, token ani PlatformIO.
+Arduino `main.cpp` je adaptér pinů/časovačů desky; změny jeho obsluhy patří Wokwi,
+zatímco změny rozhodování v `ecu_controller.h` se projeví v obou backendech.
+
+V **Wokwi** režimu vyberte v jeho záložce projekt `wokwi/hardware`, CLI a token.
+Překlad vyžaduje PlatformIO a projektový `scripts/build.py`; aplikování ukončí
+starý Wokwi proces, spustí nový firmware a čeká na potvrzení komunikace.
+Může čerpat CI kvótu. Legacy Mega projekt lze editovat, integrované sestavení
+Wokwi je určené hardwarovému projektu s tímto build skriptem.
+
+Při chybě překladu dosavadní simulace pokračuje. Změní-li se vstupy během překladu,
+nová ECU se nepoužije. Editor rozlišuje neuložený obsah, uložené vstupy, sestavenou
+a běžící/předanou revizi. Změnu souboru jiným editorem při ukládání odmítne.
 
 ![Editor ECU](docs/ecu-editor-preview.png)
 
@@ -88,8 +121,8 @@ python main.py --gui --mode wokwi --baudrate 1000000
 ```
 
 Pauza ani zpomalení hostitele neřídí hodiny MCU ve Wokwi. Okno ukazuje stav linky,
-aktivní vstřikovače, nabíjené cívky a RTT; v Mock režimu jsou označené pouze řízené
-dávky, protože Mock nevytváří jednotlivé ECU pulzy. Krátký pulz může mezi dvěma
+aktivní vstřikovače, nabíjené cívky a RTT. Mock nyní vytváří jednotlivé ECU pulzy
+stejným C++ řadičem jako firmware. Krátký pulz může mezi dvěma
 obnoveními okna proběhnout celý — měření patří časovým značkám a VCD.
 
 GUI využívá standardní Tk. Pokud modul chybí, na Ubuntu/Debianu jej doinstalujte

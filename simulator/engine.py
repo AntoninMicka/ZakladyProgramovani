@@ -35,6 +35,7 @@ class Engine(Thread):
         if type(max_future_event_us) is not int or max_future_event_us <= 0:
             raise ValueError("max_future_event_us must be a positive integer")
         self.max_future_event_us = max_future_event_us
+        self.local_ecu = None
         self.collect_events = collect_events
         self.config, self.model = config, EngineModel(config)
         self.signals = signals or SignalGenerator()
@@ -100,6 +101,8 @@ class Engine(Thread):
                 self.pending.clear()
                 self.model.open_injectors.clear()
                 self.model.charging.clear()
+                if self.local_ecu is not None:
+                    self.local_ecu.reset(self.clock.time_us)
                 self.invalidate_outputs.clear()
             for _ in range(self.capacity):
                 try:
@@ -149,15 +152,30 @@ class Engine(Thread):
     def _advance_segment(self, start_us, end_us):
         if end_us <= start_us:
             return
-        angle = self.model.angle
+        angle, rpm = self.model.angle, self.model.rpm
         self.model.step((end_us - start_us) / 1e6)
-        if not self.collect_events:
+        if not self.collect_events and self.local_ecu is None:
             return
-        for edge in self.signals.edges(angle, self.model.angle, start_us, end_us):
-            try:
-                self.events.put_nowait(edge)
-            except queue.Full:
-                self.diagnostics["dropped_events"] += 1
+        edges = self.signals.edges(angle, self.model.angle, start_us, end_us)
+        if self.local_ecu is not None:
+            # Predikce úhlu v makrokroku určí časy snímačů. Potom krok integrujeme
+            # znovu po skutečných výstupech ECU: dávka se projeví až po konci pulzu.
+            self.model.angle, self.model.rpm = angle, rpm
+            cursor = start_us
+            for event in self.local_ecu.advance(end_us, edges):
+                timestamp = event["simulation_time_us"]
+                self.model.step((timestamp - cursor) / 1e6)
+                self._apply("event", event)
+                if "ignition_deg" in event:
+                    self._apply("command", {"ignition_deg": event["ignition_deg"]})
+                cursor = timestamp
+            self.model.step((end_us - cursor) / 1e6)
+        if self.collect_events:
+            for edge in edges:
+                try:
+                    self.events.put_nowait(edge)
+                except queue.Full:
+                    self.diagnostics["dropped_events"] += 1
 
     def drain_events(self, limit=512):
         result = []
@@ -189,6 +207,8 @@ class Engine(Thread):
         with self.lock:
             self.model = EngineModel(self.config)
             self.clock.reset()
+            if self.local_ecu is not None:
+                self.local_ecu.reset()
             self.pending.clear()
             for q in (self.commands, self.events):
                 while True:

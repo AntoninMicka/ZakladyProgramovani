@@ -4,3 +4,5 @@ __pycache__/
 .pio/
 *.vcd
 wokwi/hardware/runs/
+
+.cache/

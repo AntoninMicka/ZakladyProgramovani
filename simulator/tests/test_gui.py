@@ -262,3 +262,65 @@ class GuiTests(unittest.TestCase):
         finally:
             view.close()
             app.close()
+
+    def test_editor_applies_real_shared_cpp_to_mock_without_wokwi(self):
+        import shutil
+        import tempfile
+        import time
+        import tkinter as tk
+        from pathlib import Path
+        from gui import EngineView
+        from native_ecu import PROJECT
+
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            shutil.copytree(PROJECT / "firmware", project / "firmware")
+            shutil.copytree(PROJECT / "config", project / "config")
+            root = tk.Tk()
+            app = Supervisor()
+            app.configure_initial({"rpm": 1000})
+            app.start()
+            view = EngineView(root, app)
+            try:
+                panel, editor = view.wokwi_panel, view.ecu_editor
+                panel.project.set(str(project))
+                editor.sync_project()
+                editor.filename.set("firmware/include/ecu_controller.h")
+                editor.load_selected(confirm=False)
+                text = editor.code.get("1.0", "end-1c")
+                editor.code.delete("1.0", "end")
+                editor.code.insert(
+                    "1.0", text.replace("now + ECU_INJECTION_US", "now + ECU_INJECTION_US + 1000")
+                )
+                old = app.bridge.controller.revision
+                editor.build(True)
+                deadline = time.monotonic() + 5
+                while time.monotonic() < deadline:
+                    root.update()
+                    if (
+                        not panel.mock_busy
+                        and app.bridge.controller.revision != old
+                        and app.engine.model.last_injection_us
+                    ):
+                        break
+                    time.sleep(0.005)
+                self.assertFalse(panel.mock_busy)
+                self.assertEqual(app.mode, "mock")
+                self.assertNotEqual(app.bridge.controller.revision, old)
+                self.assertEqual(set(app.engine.snapshot()["last_injection_us"].values()), {4000})
+                self.assertFalse(panel.runner.busy)
+                live = app.bridge.controller
+                editor.code.delete("1.0", "end")
+                editor.code.insert("1.0", "not valid C++")
+                editor.build(True)
+                deadline = time.monotonic() + 5
+                while panel.mock_busy and time.monotonic() < deadline:
+                    root.update()
+                    time.sleep(0.005)
+                self.assertFalse(panel.mock_busy)
+                self.assertIs(app.bridge.controller, live)
+                self.assertIn("Překlad Mock ECU selhal", panel.build_status)
+                self.assertTrue(app.engine.is_alive())
+            finally:
+                view.close()
+                app.close()

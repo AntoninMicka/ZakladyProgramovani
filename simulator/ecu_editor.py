@@ -37,7 +37,12 @@ class EcuEditor:
         ttk.Button(toolbar, text="Výpis Wokwi", command=show_log).pack(side="left", padx=5)
         ttk.Label(
             page,
-            text="Úpravy lze psát za běhu. Použít = uložit, sestavit a po úspěchu restartovat Wokwi; virtuální čas začne od nuly.",
+            text="Úpravy lze psát za běhu. Použít = uložit, sestavit a po úspěchu obnovit aktivní Mock nebo Wokwi od času nula.",
+            wraplength=1080,
+        ).pack(anchor="w")
+        ttk.Label(
+            page,
+            text="Mock používá řídicí logiku ecu_controller.h. main.cpp obsluhuje piny a časovače desky ve Wokwi.",
             wraplength=1080,
         ).pack(anchor="w")
         ttk.Label(page, textvariable=self.status, wraplength=1080).pack(anchor="w", pady=5)
@@ -182,7 +187,8 @@ class EcuEditor:
         if self.document is None:
             return False
         if (
-            self.panel.builder.busy
+            self.panel.mock_busy
+            or self.panel.builder.busy
             or self.panel.build_context is not None
             or self.panel.pending_apply is not None
         ):
@@ -203,7 +209,10 @@ class EcuEditor:
             self.status.set("Nejdříve načtěte soubor z aktuálního projektu.")
             return
         if self.save():
-            self.panel.build(apply_after=apply)
+            if self.panel.app.mode == "mock":
+                self.panel.build_mock(apply_after=apply)
+            else:
+                self.panel.build(apply_after=apply)
 
     def changed(self, event=None):
         if not self.code.edit_modified():
@@ -239,17 +248,30 @@ class EcuEditor:
         self.next_poll = monotonic() + 0.25
         self.sync_project()
         busy = (
-            self.panel.builder.busy
+            self.panel.mock_busy
+            or self.panel.builder.busy
             or self.panel.build_context is not None
             or self.panel.pending_apply is not None
         )
         for button in (self.save_button, self.build_button, self.apply_button):
             button.configure(state="disabled" if busy else "normal")
         saved = source_revision(self.project)[:10] if self.project and self.document else "—"
-        built = (self.panel.built_revision or "—")[:10]
-        running = (self.panel.running_revision or "neověřeno")[:10]
+        built = (
+            (
+                self.panel.mock_built_revision
+                if self.panel.app.mode == "mock"
+                else self.panel.built_revision
+            )
+            or "—"
+        )[:10]
+        if self.panel.app.mode == "mock":
+            running = self.panel.app.bridge.controller.revision[:10]
+            backend = "Mock ECU"
+        else:
+            running = (self.panel.running_revision or "neověřeno")[:10]
+            backend = "Wokwi / předaná revize"
         self.revisions.set(
-            f"Soubor: {'NEULOŽENÉ ZMĚNY' if self.dirty else 'uložen'} · disk {saved} · sestaveno {built} · Wokwi / předaná revize {running}"
+            f"Soubor: {'NEULOŽENÉ ZMĚNY' if self.dirty else 'uložen'} · disk {saved} · sestaveno {built} · {backend} {running}"
         )
         self.build_log.configure(state="normal")
         self.build_log.delete("1.0", "end")
