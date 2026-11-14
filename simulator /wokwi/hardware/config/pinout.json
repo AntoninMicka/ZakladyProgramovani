@@ -1,0 +1,78 @@
+{
+  "target": "esp32",
+  "profiles": {
+    "esp32": {
+      "board": "esp32dev",
+      "part": "board-esp32-devkit-c-v4",
+      "ckp": 27,
+      "cmp": 26,
+      "analog": [
+        32,
+        33,
+        34,
+        35,
+        36
+      ],
+      "analog_labels": [
+        "32",
+        "33",
+        "34",
+        "35",
+        "VP"
+      ],
+      "injectors": [
+        16,
+        17,
+        18,
+        19
+      ],
+      "ignition": [
+        21,
+        22,
+        23,
+        25
+      ],
+      "diagnostic_tx": "TX",
+      "power": "3V3",
+      "ground": "GND.1",
+      "digital_prefix": "",
+      "digital_labels": {}
+    },
+    "mega": {
+      "board": "megaatmega2560",
+      "part": "wokwi-arduino-mega",
+      "ckp": 2,
+      "cmp": 3,
+      "analog": [
+        54,
+        55,
+        56,
+        57,
+        58
+      ],
+      "analog_labels": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "A4"
+      ],
+      "injectors": [
+        22,
+        23,
+        24,
+        25
+      ],
+      "ignition": [
+        26,
+        27,
+        28,
+        29
+      ],
+      "diagnostic_tx": "1",
+      "power": "5V",
+      "ground": "GND.1",
+      "digital_prefix": ""
+    }
+  }
+}

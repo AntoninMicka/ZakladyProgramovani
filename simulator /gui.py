@@ -94,7 +94,7 @@ class EngineView:
         self.autoscroll = tk.BooleanVar(value=True)
         ttk.Checkbutton(toolbar, text='Sledovat konec', variable=self.autoscroll).pack(side='right', padx=8)
         ttk.Label(page, text='Aktuální snímek · snímače, výstupy ECU a diagnostika').pack(anchor='w')
-        self.current_telemetry = tk.Text(page, height=12, bg=PANEL, fg=TEXT, wrap='none',
+        self.current_telemetry = tk.Text(page, height=14, bg=PANEL, fg=TEXT, wrap='none',
                                          font=('Monospace', 10), state='disabled')
         self.current_telemetry.pack(fill='x', pady=(4, 12))
         ttk.Label(page, text='Průběžný výpis · nejvýše 5 vzorků/s wall time · posledních 1000 vzorků').pack(anchor='w')
@@ -134,6 +134,12 @@ class EngineView:
             f"Ztracené hrany: {d['dropped_events']}    Pozdní události: {d['late_events']}    Chybné povely: {d['rejected_commands']}\n"
             f"Max. zpoždění [µs]: {d['max_lateness_us']}    Max. wall lag [µs]: {d['max_wall_lag_us']}"
         )
+        hardware = diagnostics.get('hardware')
+        if hardware:
+            current += (f"\nVirtuální hardware: {'BĚH' if hardware['running'] else 'ZASTAVEN'}    "
+                        f"Buffer: {hardware['queue_depth']}    Fázová odchylka: {hardware['phase_error_deg']:.3f}°"
+                        f"\nHW pozdní aktualizace: {hardware['late_updates']}    CRC chyby: {hardware['crc_errors']}    "
+                        f"Ztracené zprávy: {hardware['dropped_tx']}    Watchdog: {hardware['watchdog_timeouts']}")
         self.current_telemetry.configure(state='normal')
         self.current_telemetry.delete('1.0', 'end')
         self.current_telemetry.insert('end', current)

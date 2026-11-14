@@ -1,0 +1,11 @@
+# Generated for esp32; ECU UART is NOT the simulation transport.
+[wokwi]
+version = 1
+firmware = '.pio/build/esp32/firmware.bin'
+elf = '.pio/build/esp32/firmware.elf'
+rfc2217ServerPort = 4000
+vcdFile = 'capture.vcd'
+
+[[chip]]
+name = 'engine-interface'
+binary = 'chips/engine-interface/engine-interface.chip.wasm'

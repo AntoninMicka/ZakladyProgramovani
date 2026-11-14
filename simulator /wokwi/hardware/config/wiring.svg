@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 940" role="img" aria-labelledby="title desc">
+<title id="title">ECU Hardware Simulator – izolované simulační rozhraní</title>
+<desc id="desc">Python komunikuje přímo s UART adaptérem chipu přes explicitní piny Serial Monitoru. ECU firmware používá pouze CKP, CMP, analogové snímače a výstupy INJ/IGN.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="context-stroke"/></marker></defs>
+<rect width="1100" height="940" fill="#0f172a"/>
+<g font-family="DejaVu Sans,Arial,sans-serif" fill="#e2e8f0">
+<text x="35" y="42" font-size="24">ECU Hardware Simulator · esp32</text>
+<rect x="35" y="70" width="1030" height="105" rx="10" fill="#1e293b" stroke="#38bdf8"/>
+<text x="55" y="102" font-size="17">Python model ↔ RFC2217 / Serial Monitor ↔ UART adaptér v Custom Chipu</text>
+<text x="55" y="130" font-size="14">JSON Lines + CRC32 · relace · buffered segmenty · virtuální čas Wokwi</text>
+<text x="55" y="155" font-size="14" fill="#fbbf24">Přímá topologie UART čeká na skutečný integrační test Wokwi.</text>
+<path d="M900 175 V205" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<rect x="35" y="210" width="300" height="545" rx="10" fill="#1e293b" stroke="#64748b"/>
+<rect x="755" y="210" width="310" height="545" rx="10" fill="#1e293b" stroke="#64748b"/>
+<text x="55" y="241" font-size="18">ECU MCU · pouze GPIO / ADC</text>
+<text x="775" y="241" font-size="18">Engine Interface Custom Chip</text>
+<text x="315" y="283" text-anchor="end" font-size="15">27</text>
+<path d="M335 278 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="283" font-size="15">CKP</text>
+<text x="315" y="310" text-anchor="end" font-size="15">26</text>
+<path d="M335 305 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="310" font-size="15">CMP</text>
+<text x="315" y="337" text-anchor="end" font-size="15">32</text>
+<path d="M335 332 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="337" font-size="15">MAP</text>
+<text x="315" y="364" text-anchor="end" font-size="15">33</text>
+<path d="M335 359 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="364" font-size="15">TPS</text>
+<text x="315" y="391" text-anchor="end" font-size="15">34</text>
+<path d="M335 386 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="391" font-size="15">IAT</text>
+<text x="315" y="418" text-anchor="end" font-size="15">35</text>
+<path d="M335 413 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="418" font-size="15">CLT</text>
+<text x="315" y="445" text-anchor="end" font-size="15">VP</text>
+<path d="M335 440 H755" stroke="#38bdf8" stroke-width="2" marker-start="url(#arrow)"/>
+<text x="775" y="445" font-size="15">LAMBDA</text>
+<text x="315" y="472" text-anchor="end" font-size="15">16</text>
+<path d="M335 467 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="472" font-size="15">INJ1</text>
+<text x="315" y="499" text-anchor="end" font-size="15">21</text>
+<path d="M335 494 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="499" font-size="15">IGN1</text>
+<text x="315" y="526" text-anchor="end" font-size="15">17</text>
+<path d="M335 521 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="526" font-size="15">INJ2</text>
+<text x="315" y="553" text-anchor="end" font-size="15">22</text>
+<path d="M335 548 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="553" font-size="15">IGN2</text>
+<text x="315" y="580" text-anchor="end" font-size="15">18</text>
+<path d="M335 575 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="580" font-size="15">INJ3</text>
+<text x="315" y="607" text-anchor="end" font-size="15">23</text>
+<path d="M335 602 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="607" font-size="15">IGN3</text>
+<text x="315" y="634" text-anchor="end" font-size="15">19</text>
+<path d="M335 629 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="634" font-size="15">INJ4</text>
+<text x="315" y="661" text-anchor="end" font-size="15">25</text>
+<path d="M335 656 H755" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+<text x="775" y="661" font-size="15">IGN4</text>
+<text x="55" y="727" font-size="13">TX → DIAG_RX → Chips Console</text>
+<text x="775" y="727" font-size="13">VCC / GND společné s MCU</text>
+<rect x="35" y="785" width="1030" height="75" rx="10" fill="#1e293b" stroke="#a78bfa"/>
+<text x="55" y="814" font-size="17">Logic Analyzer: D0 ← CKP · D1 ← CMP · D2 ← INJ1 · D3 ← IGN1</text>
+<text x="55" y="840" font-size="14">Export VCD → kontrola geometrie a časování · samostatně od UART diagnostiky</text>
+<text x="35" y="900" font-size="14" fill="#94a3b8">Firmware ECU neobsahuje simulační JSON protokol ani fyzikální model motoru.</text>
+</g></svg>

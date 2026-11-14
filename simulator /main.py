@@ -14,7 +14,10 @@ def main():
     parser = argparse.ArgumentParser(description='ECU SIL / Wokwi bridge')
     parser.add_argument('--mode',choices=['mock','wokwi'],default='mock')
     parser.add_argument('--url',default='rfc2217://localhost:4000')
-    parser.add_argument('--baudrate',type=int,default=115200)
+    parser.add_argument('--wokwi-hardware',action='store_true',help='Isolated hardware chip profile with CRC32')
+    parser.add_argument('--hardware-mode',choices=['buffered','free'],default='buffered')
+    parser.add_argument('--lookahead-us',type=int,default=100000)
+    parser.add_argument('--baudrate',type=int)
     parser.add_argument('--duration',type=float,help='Wall seconds; CLI default 15, GUI until closed')
     parser.add_argument('--gui',action='store_true',help='Live desktop visualization (Tk)')
     parser.add_argument('--throttle',type=float,default=.35)
@@ -28,6 +31,12 @@ def main():
     parser.add_argument('--console-telemetry',action='store_true',help='Print telemetry also while GUI is open')
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
+    if args.wokwi_hardware and args.mode != 'wokwi':
+        parser.error('--wokwi-hardware requires --mode wokwi')
+    if args.baudrate is not None and not 1 <= args.baudrate <= 2000000:
+        parser.error('baudrate must be in 1..2000000')
+    if args.baudrate is None:
+        args.baudrate = 1000000 if args.wokwi_hardware else 115200
     import math
     if (not all(math.isfinite(x) and x>0 for x in (args.rate,args.speed))
             or (args.duration is not None and (not math.isfinite(args.duration) or args.duration<=0))
@@ -36,7 +45,8 @@ def main():
     try:
         settings = json.loads(args.config.read_text())
         app = Supervisor(args.mode,args.url,args.step_us/1e6,args.speed,
-                         EngineConfig(**settings['engine']),SignalGenerator(**settings['signals']),args.baudrate)
+                         EngineConfig(**settings['engine']),SignalGenerator(**settings['signals']),args.baudrate,
+                         args.wokwi_hardware,args.hardware_mode,args.lookahead_us)
         initial = {'throttle':args.throttle,'load_nm':args.load}
         if args.rpm is not None: initial['rpm'] = args.rpm
         # Validace před spuštěním vláken.

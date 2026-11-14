@@ -5,10 +5,11 @@ from model import EngineConfig
 
 class Supervisor:
     def __init__(self, mode='mock', url='rfc2217://localhost:4000', dt=.001, speed=1,
-                 config=EngineConfig(), signals=None, baudrate=115200):
+                 config=EngineConfig(), signals=None, baudrate=115200, hardware=False, hardware_mode='buffered', lookahead_us=100000):
         self.mode, self.url, self.baudrate = mode, url, baudrate
+        self.hardware_options = dict(hardware=hardware, hardware_mode=hardware_mode, lookahead_us=lookahead_us)
         self.engine = Engine(dt=dt,speed=speed,config=config,signals=signals)
-        self.bridge = MockBridge(self.engine) if mode == 'mock' else RFC2217Bridge(self.engine,url,baudrate)
+        self.bridge = MockBridge(self.engine) if mode == 'mock' else RFC2217Bridge(self.engine,url,baudrate,**self.hardware_options)
 
     def start(self):
         self.engine.start()
@@ -26,7 +27,7 @@ class Supervisor:
         self.engine.pause()
         self.engine.reset()
         if isinstance(self.bridge,RFC2217Bridge):
-            self.bridge = RFC2217Bridge(self.engine,self.url,self.baudrate)
+            self.bridge = RFC2217Bridge(self.engine,self.url,self.baudrate,**self.hardware_options)
         else: self.bridge = MockBridge(self.engine)
         self.bridge.start()
         self.engine.resume()

@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "author": "ECU Hardware Simulator",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "ecu",
+      "left": 0,
+      "top": 0,
+      "attrs": {}
+    },
+    {
+      "type": "chip-engine-interface",
+      "id": "engine",
+      "left": 500,
+      "top": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-logic-analyzer",
+      "id": "logic",
+      "left": 500,
+      "top": -220,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [
+      "$serialMonitor:TX",
+      "engine:RX",
+      "green",
+      []
+    ],
+    [
+      "engine:TX",
+      "$serialMonitor:RX",
+      "green",
+      []
+    ],
+    [
+      "ecu:3V3",
+      "engine:VCC",
+      "red",
+      []
+    ],
+    [
+      "ecu:GND.1",
+      "engine:GND",
+      "black",
+      []
+    ],
+    [
+      "ecu:TX",
+      "engine:DIAG_RX",
+      "gray",
+      []
+    ],
+    [
+      "ecu:27",
+      "engine:CKP",
+      "blue",
+      []
+    ],
+    [
+      "ecu:26",
+      "engine:CMP",
+      "purple",
+      []
+    ],
+    [
+      "engine:MAP",
+      "ecu:32",
+      "orange",
+      []
+    ],
+    [
+      "engine:TPS",
+      "ecu:33",
+      "orange",
+      []
+    ],
+    [
+      "engine:IAT",
+      "ecu:34",
+      "orange",
+      []
+    ],
+    [
+      "engine:CLT",
+      "ecu:35",
+      "orange",
+      []
+    ],
+    [
+      "engine:LAMBDA",
+      "ecu:VP",
+      "orange",
+      []
+    ],
+    [
+      "ecu:16",
+      "engine:INJ1",
+      "green",
+      []
+    ],
+    [
+      "ecu:21",
+      "engine:IGN1",
+      "magenta",
+      []
+    ],
+    [
+      "ecu:17",
+      "engine:INJ2",
+      "green",
+      []
+    ],
+    [
+      "ecu:22",
+      "engine:IGN2",
+      "magenta",
+      []
+    ],
+    [
+      "ecu:18",
+      "engine:INJ3",
+      "green",
+      []
+    ],
+    [
+      "ecu:23",
+      "engine:IGN3",
+      "magenta",
+      []
+    ],
+    [
+      "ecu:19",
+      "engine:INJ4",
+      "green",
+      []
+    ],
+    [
+      "ecu:25",
+      "engine:IGN4",
+      "magenta",
+      []
+    ],
+    [
+      "engine:CKP",
+      "logic:D0",
+      "blue",
+      []
+    ],
+    [
+      "engine:CMP",
+      "logic:D1",
+      "blue",
+      []
+    ],
+    [
+      "engine:INJ1",
+      "logic:D2",
+      "blue",
+      []
+    ],
+    [
+      "engine:IGN1",
+      "logic:D3",
+      "blue",
+      []
+    ],
+    [
+      "logic:GND",
+      "engine:GND",
+      "black",
+      []
+    ]
+  ],
+  "serialMonitor": {
+    "display": "always",
+    "newline": "lf"
+  }
+}

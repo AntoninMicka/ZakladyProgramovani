@@ -168,7 +168,24 @@ Přímé programové `MockBridge.receive()` zachovává starý tvar kvůli půvo
 UART0 propojuje MCU s Pythonem a UART1 s Custom Chipem. Logic Analyzer
 sleduje CKP, CMP, INJ0 a COIL0 pro export a kontrolu VCD.
 
-## Wokwi demonstrační projekt
+## Wokwi Hardware – izolovaná ESP32 ECU
+
+Nové zadání virtuálního hardware je v **[wokwi/hardware/README.md](wokwi/hardware/README.md)**.
+Tento samostatný profil používá GPIO/ADC firmware ESP32 bez simulačního protokolu,
+konfigurovatelný Custom Chip s událostním CKP/CMP a oddělený UART adaptér.
+Preferuje buffered režim a přidává CRC32, relace a diagnostiku virtuálního hardware.
+
+```bash
+python wokwi/hardware/scripts/build.py
+# Ve Wokwi vyberte wokwi/hardware/wokwi.toml; poté:
+python wokwi/hardware/scripts/run_host.py --gui --telemetry /tmp/ecu-hardware.jsonl
+```
+
+Sestavení a nativní integrační testy jsou ověřené. Přímé propojení Serial Monitoru
+s UART chipu i skutečný běh Wokwi zůstávají otevřené: viz [prototyp a výsledky](wokwi/hardware/VERIFICATION.md).
+Následující Mega demo je historický profil, který neodděluje protokol od ECU.
+
+## Historický Wokwi demonstrační projekt (Mega)
 
 Používá Arduino Mega 2560 kvůli samostatnému UART pro hostitele a chip.
 Zdroj i zapojení jsou v `wokwi/`; vestavěná LED bliká při cyklech výstupů ECU.

@@ -9,7 +9,7 @@ def format_sample(state, bridge, wall_elapsed_s):
         link = 'online' if link else 'offline'
     diagnostic = state['diagnostics']
     levels = state['signal_levels']
-    return (
+    text = (
         f"wall={wall_elapsed_s:8.3f}s sim={state['time_s']:9.4f}s "
         f"RPM={state['rpm']:7.1f} TPS={state['tps']*100:5.1f}% "
         f"MAP={state['map_kpa']:5.1f}kPa λ={state['lambda_value']:.2f} "
@@ -20,6 +20,11 @@ def format_sample(state, bridge, wall_elapsed_s):
         f"lost={diagnostic['dropped_events']} late={diagnostic['late_events']} "
         f"rejected={diagnostic['rejected_commands']}"
     )
+    hardware = bridge.get('hardware')
+    if hardware:
+        text += (f" hw_run={hardware['running']} hw_queue={hardware['queue_depth']}"
+                 f" hw_late={hardware['late_updates']} hw_crc={hardware['crc_errors']}")
+    return text
 
 
 class TelemetryBuffer:

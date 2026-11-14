@@ -1,0 +1,5 @@
+{
+  "name": "Engine Interface · buffered UART",
+  "author": "ECU Simulator",
+  "pins": ["VCC", "GND", "RX", "TX", "DIAG_RX", "CKP", "CMP", "MAP", "TPS", "IAT", "CLT", "LAMBDA", "INJ1", "INJ2", "INJ3", "INJ4", "IGN1", "IGN2", "IGN3", "IGN4"]
+}
