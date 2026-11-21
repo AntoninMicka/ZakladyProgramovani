@@ -204,10 +204,11 @@ na příštím průjezdu startem začne nové. Couvání přes čáru ani zkratk
 nevytvářejí další platná kola. Aktuální a nejlepší čas jsou v HUD, poslední čas
 je navíc v telemetrii `driving.last_lap_s`. Pauza čas kola neposouvá.
 
-Motor stále řídí aktuální studentský algoritmus. Pokud pedál znamená cílové
-otáčky, bude auto reagovat právě podle něj. Režim jízdy jej nepřepisuje na
-přímé ovládání momentu. ABS/ESP i řazení mají dosavadní výukové zjednodušení,
-boční skluz, přenos zatížení, pneumatiky a aerodynamika nejsou kalibrované.
+Motor v lokálním režimu auta řídí [automobilní ECU](automobilni-ecu.md):
+pedál je požadavek na moment/klapku, nikoli na pevné otáčky. Samostatný
+volnoběh, palivo podle vzduchu a lambda, dojezd bez paliva a spolupráce
+s TCU/ESP odpovídají nynější fyzice modelu. Vůz má stále výukově zjednodušené
+pneumatiky, dynamiku i spalování; nejde o kalibraci reálného auta.
 
 ## Zdroj a ověření
 

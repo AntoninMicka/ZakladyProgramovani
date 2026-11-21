@@ -29,11 +29,15 @@ def format_sample(state, bridge, wall_elapsed_s):
             f" ECU_fuel={controller.get('injection_us', 0)}us"
             f" ECU_rpm_goal={goal if goal is not None else 'off'}"
         )
+    if controller and controller.get("vehicle_mode"):
+        text += f" ECU_state={controller['car_state_name']} ECU_faults=0x{controller['car_faults']:X} trim={controller['lambda_trim']:.3f}"
     vehicle = state.get("vehicle")
     if vehicle:
-        text += (f" CAR={vehicle['speed_kmh']:.1f}km/h gear={vehicle['gear']}"
-                 f" ABS={vehicle['abs_active']} ESP={vehicle['esp_active']}"
-                 f" CAN={vehicle['can']['delivered']}/{vehicle['can']['dropped']}")
+        text += (
+            f" CAR={vehicle['speed_kmh']:.1f}km/h gear={vehicle['gear']}"
+            f" ABS={vehicle['abs_active']} ESP={vehicle['esp_active']}"
+            f" CAN={vehicle['can']['delivered']}/{vehicle['can']['dropped']}"
+        )
     driving = state.get("driving")
     if driving:
         text += f" LAP={driving['laps']} lap_time={driving['lap_time_s']:.2f}s off_track={driving['off_track']}"

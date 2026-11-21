@@ -9,8 +9,56 @@ import shutil
 import subprocess
 import tempfile
 
+from ecu_status import STATES, fault_names
+
 ROOT = Path(__file__).resolve().parent
 PROJECT = ROOT / "wokwi/hardware"
+
+
+VEHICLE_FIELDS = (
+    "map_kpa",
+    "maf_g_s",
+    "iat_c",
+    "baro_kpa",
+    "coolant_c",
+    "oil_c",
+    "oil_kpa",
+    "battery_v",
+    "rail_kpa",
+    "fuel_l",
+    "exhaust_c",
+    "lambda_value",
+    "speed_kmh",
+    "wheel_fl",
+    "wheel_fr",
+    "wheel_rl",
+    "wheel_rr",
+    "brake",
+    "steer_deg",
+    "yaw_deg_s",
+    "ax",
+    "ay",
+    "input_rpm",
+    "output_rpm",
+    "gear",
+    "shifting",
+    "torque_limit",
+    "abs_active",
+    "esp_active",
+    "can_valid",
+    "auxiliary_load_nm",
+    "drivetrain_load_nm",
+    "cylinders",
+    "tps",
+    "brake_fl",
+    "brake_fr",
+    "brake_rl",
+    "brake_rr",
+)
+
+
+class VehicleInputs(c.Structure):
+    _fields_ = [(name, c.c_double) for name in VEHICLE_FIELDS]
 
 
 class InputEdge(c.Structure):
@@ -114,6 +162,15 @@ class NativeEcu:
         lib.ecu_create.restype = c.c_void_p
         lib.ecu_destroy.argtypes = [c.c_void_p]
         lib.ecu_reset.argtypes = [c.c_void_p, c.c_uint64, c.c_double]
+        lib.ecu_vehicle_inputs_size.restype = c.c_size_t
+        if lib.ecu_vehicle_inputs_size() != c.sizeof(VehicleInputs):
+            raise RuntimeError("Neshodné ABI automobilních snímačů")
+        lib.ecu_set_vehicle_inputs.argtypes = [
+            c.c_void_p,
+            c.POINTER(VehicleInputs),
+            c.c_uint64,
+            c.c_uint,
+        ]
         lib.ecu_advance.argtypes = [
             c.c_void_p,
             c.c_uint64,
@@ -131,6 +188,13 @@ class NativeEcu:
             ("pedal", c.c_double),
             ("requested_rpm", c.c_double),
             ("injection_us", c.c_uint32),
+            ("vehicle_mode", c.c_uint),
+            ("car_state", c.c_uint),
+            ("car_faults", c.c_uint32),
+            ("throttle_target", c.c_double),
+            ("lambda_trim", c.c_double),
+            ("advance_deg", c.c_double),
+            ("dwell_us", c.c_uint32),
         ):
             function = getattr(lib, "ecu_" + name)
             function.argtypes = [c.c_void_p]
@@ -144,6 +208,14 @@ class NativeEcu:
     def reset(self, now=0, accelerator=1):
         self.library.ecu_reset(self.handle, now, accelerator)
         self.received = 0
+
+    def set_vehicle_inputs(self, data, now=0):
+        if data is not None and set(data) != set(VEHICLE_FIELDS):
+            raise ValueError("Neúplný nebo neznámý snímek senzorů ECU")
+        snapshot = VehicleInputs(**data) if data is not None else VehicleInputs()
+        self.library.ecu_set_vehicle_inputs(
+            self.handle, c.byref(snapshot), now, int(data is not None)
+        )
 
     def advance(self, end, edges, accelerator=1):
         inputs = (InputEdge * len(edges))(
@@ -174,6 +246,14 @@ class NativeEcu:
                 event["ignition_deg"] = output.advance
         return events
 
+    def vehicle_output(self):
+        return (
+            self.library.ecu_throttle_target(self.handle),
+            self.library.ecu_injection_us(self.handle),
+            self.library.ecu_car_state(self.handle),
+            self.library.ecu_car_faults(self.handle),
+        )
+
     def diagnostics(self):
         if not self.handle:
             return self.last_diagnostics
@@ -190,6 +270,15 @@ class NativeEcu:
                 else self.library.ecu_requested_rpm(self.handle)
             ),
             injection_us=self.library.ecu_injection_us(self.handle),
+            vehicle_mode=bool(self.library.ecu_vehicle_mode(self.handle)),
+            car_state_name=STATES.get(self.library.ecu_car_state(self.handle), "NEZNÁMÝ"),
+            car_fault_names=fault_names(self.library.ecu_car_faults(self.handle)),
+            car_state=self.library.ecu_car_state(self.handle),
+            car_faults=self.library.ecu_car_faults(self.handle),
+            throttle_target=self.library.ecu_throttle_target(self.handle),
+            lambda_trim=self.library.ecu_lambda_trim(self.handle),
+            advance_deg=self.library.ecu_advance_deg(self.handle),
+            dwell_us=self.library.ecu_dwell_us(self.handle),
         )
 
     def __del__(self):

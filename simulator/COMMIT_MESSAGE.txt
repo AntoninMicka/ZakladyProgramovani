@@ -1,21 +1,9 @@
-feat: přidat jízdu po okruhu s joypadem nad společným modelem auta
+feat: přidat automobilní regulaci motoru podle senzorů vozidla
 
-- doplnit polohu vozu, okruh, povrchy a měření platných kol
-- přidat neblokující Linux joypad vstup a uložitelná mapování os/tlačítek
-- doplnit ovládání klávesnicí, mapu a perspektivní pohled z čelního okna
-- vykreslit krajinu, volant navázaný na řízení a palubní přístroje
-- při ztrátě vstupu či zaměření pozastavit jízdu a přidat watchdog
-- propojit režim s GUI, telemetrií a společným spouštěčem
-- přidat testy a návod včetně omezení ověření bez hardware
-
-- opravit kontrolu fokusu u interního Combobox popdown okna bez pádu GUI
-
-- rozpoznávat Xbox-like / PS4 / D-input podle ABS/BTN metadat driveru
-- doplnit mrtvou zónu pedálů, neutrální stav před rozjezdem a diagnostiku gamepadu
-
-- přidat 20krokové ověření pojmenovaných páček, kříže, tlačítek a triggerů
-- ověřovat návrat do klidu, potlačit jízdní akce a exportovat protokol bez přemapování
-
-- upravit přístrojový štít: budíky, uprostřed vůz/motor, nahoře stupeň a dole kontrolky
-
-- vložit zmenšený štít do věnce většího volantu a napravo přidat dvě živé diagnostiky
+- předávat senzorový snímek do společné C++ ECU přes ověřené C ABI
+- řídit moment klapkou, dávku podle MAF/MAP a směs podle lambda
+- doplnit PI volnoběh, brzdění motorem, omezovač a spolupráci s TCU/ESP
+- přidat ochrany a kompenzace teplot, oleje, napětí a tlaku paliva
+- sladit fyziku vzduchu, efektivního paliva a spotřeby s regulátorem
+- zobrazit režim a diagnostiku ECU a zachovat samostatnou studentskou větev
+- ověřit změny skutečnými C++ pulzy, scénáři jízdy a testy

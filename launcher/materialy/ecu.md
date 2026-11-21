@@ -28,9 +28,11 @@ získává otáčky a fázi cyklu, potom řídí vstřikovače a zapalování. D
 se vracejí do modelu a ovlivňují motor. V Mock běží vše podle společného virtuálního
 času, takže můžeš děj zpomalit nebo pozastavit.
 
-Pedál zatím přímo určuje palivo v ECU. Plný pedál odpovídá 3ms vstřiku,
-35 % přibližně 1,05 ms. Python moment podruhé nenásobí pedálem. **Automatický
-regulátor požadovaných otáček zatím není hotový — je studentským úkolem.**
+V samostatném motoru běží studentská `update_control()`. Režimy Auto/Jízda
+s lokálním Mock používají automobilní `update_vehicle_control()`: pedál
+je požadavek na moment/klapku, palivo se počítá ze vzduchu, volnoběh má vlastní
+regulaci a TCU/ESP žádají omezení momentu. Podrobnosti a ochrany jsou v
+[automobilní ECU](../../simulator/docs/automobilni-ecu.md).
 
 ## Ovládání okna ECU
 

@@ -30,6 +30,15 @@ má nastavitelné osy a tlačítka, bez ovladače fungují šipky/WASD.
 V kokpitu je volant, palubní deska a krajina se stromy a domky kolem tratě.
 Podrobnosti a omezení jsou v [návodu k jízdě](docs/jizda.md).
 
+## Automobilní regulace motoru
+
+Lokální režimy Auto/Jízda nyní používají automobilní C++ ECU: pedál jako
+požadavek na moment, klapku a MAF dávkování, volnoběh 850 ot/min, lambda trim,
+brzdění motorem a spolupráci s TCU/ESP. Všechny dostupné skupiny senzorů se
+předávají do ECU; část slouží k ochranám a věrohodnosti dat. Samostatná
+studentská regulace motoru zůstává oddělená. Popis senzorů, kalibrací a omezení
+najdeš v [automobilní ECU](docs/automobilni-ecu.md).
+
 ## Linux: instalace a spuštění
 
 Adresář se jmenuje `simulator` bez mezery na konci (původní `simulator ` byl přejmenován).

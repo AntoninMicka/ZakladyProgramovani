@@ -3,7 +3,8 @@
 Model rozšiřuje stávající motor o přední pohon, automatickou převodovku s TCU,
 spojku, otevřený diferenciál, čtyři kola, brzdy s ABS, jednoduché ESP,
 virtuální CAN a palubní přístroje. Dosavadní samostatný režim motoru zůstává dostupný.
-Studentův C++ regulátor v `ecu_controller.h` se používá dál beze změny.
+Režim auta s Mock backendem nyní používá [automobilní C++ ECU](automobilni-ecu.md).
+Původní studentský regulátor zůstává pro samostatný motor.
 
 ## Spuštění a ovládání
 
@@ -111,6 +112,8 @@ ABS při skluzu nad 18 % a rychlosti nad 1 m/s snižuje tlak daného kola a poto
 jej znovu postupně zvyšuje. ESP porovnává požadované stáčení z úhlu kol a rychlosti
 se simulovaným stáčením, přibrzďuje jedno zadní kolo a žádá snížení momentu na 45 %.
 Je to demonstrace zpětné vazby, nikoli reprodukce výrobního algoritmu ABS/ESP.
+V automobilním Mock režimu se požadavek omezení momentu provádí jednou v ECU
+přes klapku; fyzikální model jej podruhé nenásobí.
 CAN není vložena mezi původní CKP/CMP a vstřikovací časovače: jejich časování zůstává lokální.
 
 ## Senzory
@@ -131,10 +134,9 @@ Podvozek doplňuje:
 | Palivo | stav nádrže [l], tlak lišty [kPa] | odhad spotřeby z dávky/cyklů, pevný provozní tlak |
 | Vzduch/výfuk | MAF [g/s], IAT [°C], barometrický tlak [kPa], EGT [°C] | orientační vztahy a konstanty |
 
-Odhad MAF není model skutečného plnění válců. Nádrž je zatím ukazatel spotřeby,
-neodstavuje vstřikování při vyprázdnění. Olejový tlak ani napětí nejsou výsledkem
-hydraulického či elektrického obvodu. Nové senzory zatím nevstupují do studentského
-regulátoru paliva; jejich čtení lze doplnit v další etapě. Dynamická kapalina v režimu
+Odhad MAF není model skutečného plnění válců. V automobilním Mock režimu nádrž při vyprázdnění odstaví vstřikování přes ECU. Olejový tlak ani napětí nejsou výsledkem
+hydraulického či elektrického obvodu. Nové senzory nyní vstupují do automobilní ECU pro dávkování, ochrany či
+diagnostiku; původní studentská větev zůstává samostatná. Dynamická kapalina v režimu
 auta se promítá také do původních polí `coolant_c`/`clt_c` motorové telemetrie.
 
 ## CAN zprávy

@@ -45,6 +45,13 @@ SENSOR_HELP = {
 
 def component_details(key, state, diagnostics, signals):
     """Popisek a živé údaje. Odděleno od Tk, aby šly ověřit významy snímačů."""
+    automotive = bool(state.get("vehicle", {}).get("ecu"))
+    if key == "tps" and automotive:
+        return (
+            "TPS / APP · klapka a pedál",
+            "V režimu auta je pedál požadavek na moment; ECU ovládá zpožděnou klapku. TPS ukazuje její skutečnou polohu.",
+            f"TPS: {state['tps'] * 100:.1f} %\nAPP / pedál: {state['accelerator'] * 100:.1f} %",
+        )
     if key in SENSOR_HELP:
         title, explanation = SENSOR_HELP[key]
         values = {
@@ -88,19 +95,19 @@ def component_details(key, state, diagnostics, signals):
         goal = controller.get("requested_rpm")
         values = f"Otáčky modelu: {state['rpm']:.0f} ot/min\nPedál: {state['tps'] * 100:.1f} %\nPoslední dávka: {state['injector_ms']:.3f} ms"
         if controller:
-            values += f"\nECU naměřila: {controller['rpm']:.0f} ot/min\nPožadavek ECU: {controller['injection_us']} µs\nCíl ECU: {f'{goal:.0f} ot/min' if goal is not None else 'přímé řízení paliva'}"
+            values += f"\nECU naměřila: {controller['rpm']:.0f} ot/min\nPožadavek ECU: {controller['injection_us']} µs\nCíl ECU: {f'{goal:.0f} ot/min' if goal is not None else 'momentový požadavek' if controller.get('vehicle_mode') else 'studentské řízení'}"
         else:
             values += "\nVlastní měření a cíl ECU nejsou\nv tomto snímku dostupné."
         return (
             "ECU · řídicí jednotka",
-            "Čte snímače a rozhoduje o výstupech. Funkce update_control() zatím převádí pedál přímo na palivo. Student ji změní na regulátor požadovaných otáček; hotový regulátor zde není zapnutý.",
+            "Čte snímače a rozhoduje o výstupech. V režimu auta používá update_vehicle_control() pro klapku, směs a ochrany; v samostatném motoru zůstává studentská update_control().",
             values,
         )
     if key == "pedal":
         return (
             "Pedál · vstup řidiče",
-            "Poloha pedálu vstupuje do ECU. Zatím znamená přímý požadavek na palivo. Ve studentském úkolu bude určovat požadované otáčky. Python moment znovu pedálem nenásobí.",
-            f"Poloha pedálu: {state['tps'] * 100:.1f} %",
+            "Poloha pedálu vstupuje do ECU. V režimu auta jde o požadavek na moment, u samostatného motoru význam určuje studentská funkce. Python moment znovu pedálem nenásobí.",
+            f"Poloha pedálu: {state['accelerator'] * 100:.1f} %",
         )
     if key == "load":
         return (
@@ -262,7 +269,9 @@ class EngineDiagram:
     RENDERER = SvgCanvas
     DETAILS = staticmethod(component_details)
     HEADING = "Průhledový řez · kliknutím vyber díl"
-    HINT = "Krátké pulzy mohou proběhnout mezi dvěma obnoveními obrazovky. Schéma neměří piny Wokwi."
+    HINT = (
+        "Krátké pulzy mohou proběhnout mezi dvěma obnoveními obrazovky. Schéma neměří piny Wokwi."
+    )
     INITIAL_PART = "ecu"
     SAVE_NAME = "schema-motoru.svg"
     STATUS = "Samostatné SVG má průhledné pozadí. Řez je ilustrační čtyřválec; hodnoty patří aktivnímu modelu."

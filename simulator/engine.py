@@ -8,6 +8,7 @@ from time import monotonic
 from clock import SimulationClock
 from model import EngineModel, EngineConfig
 from signals import SignalGenerator
+from ecu_status import STATES, fault_names
 
 
 class Engine(Thread):
@@ -40,6 +41,7 @@ class Engine(Thread):
         self.collect_events = collect_events
         self.config, self.model = config, EngineModel(config)
         from vehicle import VehicleModel
+
         self.vehicle = VehicleModel() if vehicle else None
         self.driving = None
         self.signals = signals or SignalGenerator()
@@ -66,6 +68,7 @@ class Engine(Thread):
 
     def set_vehicle_enabled(self, enabled):
         from vehicle import VehicleModel
+
         with self.lock:
             if enabled and self.vehicle is None:
                 self.vehicle = VehicleModel(start_us=self.clock.time_us)
@@ -73,12 +76,14 @@ class Engine(Thread):
             elif not enabled:
                 self.vehicle = None
                 self.driving = None
+                self.model.vehicle_physics = False
             self.model.drivetrain_load_nm = 0.0
             self.model.torque_factor = 1.0
 
     def enable_driving(self):
         from racetrack import DrivingSession
         from vehicle import VehicleModel
+
         with self.lock:
             self.vehicle = VehicleModel(start_us=self.clock.time_us)
             self.driving = DrivingSession(self.clock.time_us)
@@ -92,10 +97,15 @@ class Engine(Thread):
 
     def drive_input(self, throttle, brake, steer_deg, source="keyboard"):
         import math
+
         values = (throttle, brake, steer_deg)
-        if (not all(type(x) in (int, float) and math.isfinite(x) for x in values)
-                or not 0 <= throttle <= 1 or not 0 <= brake <= 1
-                or not -30 <= steer_deg <= 30 or source not in ("keyboard", "joypad", "demo")):
+        if (
+            not all(type(x) in (int, float) and math.isfinite(x) for x in values)
+            or not 0 <= throttle <= 1
+            or not 0 <= brake <= 1
+            or not -30 <= steer_deg <= 30
+            or source not in ("keyboard", "joypad", "demo")
+        ):
             raise ValueError("Neplatné ovládání jízdy")
         with self.lock:
             if self.driving is None or self.vehicle is None:
@@ -149,8 +159,15 @@ class Engine(Thread):
         with self.lock:
             return {
                 **self.model.snapshot(),
-                **({"vehicle": self.vehicle.snapshot(), "coolant_c": self.vehicle.coolant,
-                    "clt_c": self.vehicle.coolant} if self.vehicle is not None else {}),
+                **(
+                    {
+                        "vehicle": self.vehicle.snapshot(),
+                        "coolant_c": self.vehicle.coolant,
+                        "clt_c": self.vehicle.coolant,
+                    }
+                    if self.vehicle is not None
+                    else {}
+                ),
                 **({"driving": self.driving.snapshot()} if self.driving is not None else {}),
                 "time_s": self.clock.time_us / 1e6,
                 "simulation_time_us": self.clock.time_us,
@@ -211,6 +228,16 @@ class Engine(Thread):
                     self.paused = True
             if self.paused:
                 return
+            automotive = self.vehicle is not None and self.local_ecu is not None
+            self.model.vehicle_physics = automotive
+            if self.local_ecu is not None:
+                if automotive:
+                    inputs = self.vehicle.ecu_inputs(self.model)
+                    self.local_ecu.set_vehicle_inputs(inputs, self.clock.time_us)
+                    self.model.battery_v = inputs["battery_v"]
+                    self.model.fuel_rail_kpa = inputs["rail_kpa"]
+                else:
+                    self.local_ecu.set_vehicle_inputs(None, self.clock.time_us)
             start_us = self.clock.time_us
             end_us = start_us + self.clock.step_us
             # Události rozdělí pevný makrokrok; palivo se projeví až po konci impulzu.
@@ -232,18 +259,37 @@ class Engine(Thread):
             if self.vehicle is not None:
                 if self.driving is not None:
                     self.driving.before_step(self.vehicle)
-                self.vehicle.step(self.dt, self.model.rpm, self.model.combustion_torque(),
-                                  self.model.throttle, self.model.injector_ms * 1000, self.config.cylinders)
+                self.vehicle.motor_sensors = self.model.snapshot()
+                self.vehicle.step(
+                    self.dt,
+                    self.model.rpm,
+                    self.model.combustion_torque(),
+                    self.model.throttle,
+                    self.model.injector_ms * 1000,
+                    self.config.cylinders,
+                )
                 if self.driving is not None:
                     self.driving.step(self.vehicle, self.dt, end_us)
                 self.model.drivetrain_load_nm = self.vehicle.engine_load_nm
-                self.model.torque_factor = self.vehicle.torque_factor
+                # Požadavek ESP už provádí automobilní ECU přes vzduch: neškrtit podruhé.
+                self.model.torque_factor = 1.0 if automotive else self.vehicle.torque_factor
+                if automotive:
+                    throttle, pulse, mode, faults = self.local_ecu.vehicle_output()
+                    self.model.throttle_target = throttle
+                    self.vehicle.ecu_status = {
+                        "mode": mode,
+                        "state_name": STATES.get(mode, "NEZNÁMÝ"),
+                        "fault_names": fault_names(faults),
+                        "faults": faults,
+                        "throttle_target": throttle,
+                        "injection_us": pulse,
+                    }
             self.clock.advance()
 
     def _advance_segment(self, start_us, end_us):
         if end_us <= start_us:
             return
-        angle, rpm = self.model.angle, self.model.rpm
+        angle, rpm, air = self.model.angle, self.model.rpm, self.model.air_throttle
         self.model.step((end_us - start_us) / 1e6)
         if not self.collect_events and self.local_ecu is None:
             return
@@ -251,7 +297,7 @@ class Engine(Thread):
         if self.local_ecu is not None:
             # Predikce úhlu v makrokroku určí časy snímačů. Potom krok integrujeme
             # znovu po skutečných výstupech ECU: dávka se projeví až po konci pulzu.
-            self.model.angle, self.model.rpm = angle, rpm
+            self.model.angle, self.model.rpm, self.model.air_throttle = angle, rpm, air
             cursor = start_us
             for event in self.local_ecu.advance(end_us, edges, self.model.throttle):
                 timestamp = event["simulation_time_us"]
@@ -299,9 +345,11 @@ class Engine(Thread):
             self.model = EngineModel(self.config)
             if self.vehicle is not None:
                 from vehicle import VehicleModel
+
                 self.vehicle = VehicleModel(self.vehicle.config)
             if self.driving is not None:
                 from racetrack import DrivingSession
+
                 self.driving = DrivingSession()
                 self.vehicle.heading = self.driving.heading
                 self.vehicle.command({"selector": "D", "brake": 1.0})

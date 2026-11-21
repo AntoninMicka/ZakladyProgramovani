@@ -403,6 +403,9 @@ class CockpitView:
             f"MAP {number(state.get('map_kpa'), 1)}kPa  λ {number(state.get('lambda_value'), 2)}  CLT {number(sensors.get('coolant_c'), 1)}°C",
             f"TCU {v.get('gear', '—')}  SPOJKA {number(v.get('engine_load_nm'), 1)}Nm  PALIVO {number(sensors.get('fuel_level_l'), 1)}l",
         ]
+        if v.get("ecu"):
+            ecu = v["ecu"]
+            motor.append(f"ECU {ecu.get('state_name', '—')}  DTC 0x{ecu.get('faults', 0):X}")
         chassis = [
             "KOLA "
             + "  ".join(f"{key} {number(wheels.get(key), 1)}" for key in ("FL", "FR", "RL", "RR")),
@@ -436,7 +439,7 @@ class CockpitView:
             for row, line in enumerate(rows):
                 c.create_text(
                     x + 10,
-                    y + h * (0.39 + row * 0.235),
+                    y + h * (0.35 + row * 0.55 / max(1, len(rows) - 1)),
                     text=line,
                     anchor="w",
                     fill="#86efac",

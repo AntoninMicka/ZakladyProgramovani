@@ -32,6 +32,18 @@
 
 // struct sdružuje proměnné (paměť řadiče) a funkce (co řadič umí) do jednoho celku.
 // Konkrétní řadič se v main.cpp jmenuje ecu, takže například ecu.rpm jsou jeho otáčky.
+// Snímek vozidla pro automobilní režim. Všechny členy double udržují jednoduché C ABI.
+// Pedál a CKP/CMP nadále vstupují původní cestou. Karosářské veličiny jsou diagnostika.
+struct EcuVehicleInputs {
+  double map_kpa, maf_g_s, iat_c, baro_kpa, coolant_c, oil_c, oil_kpa;
+  double battery_v, rail_kpa, fuel_l, exhaust_c, lambda_value;
+  double speed_kmh, wheel_fl, wheel_fr, wheel_rl, wheel_rr;
+  double brake, steer_deg, yaw_deg_s, ax, ay;
+  double input_rpm, output_rpm, gear, shifting, torque_limit, abs_active, esp_active, can_valid;
+  double auxiliary_load_nm, drivetrain_load_nm, cylinders;
+  double tps, brake_fl, brake_fr, brake_rl, brake_rr;
+};
+
 struct EcuController {
   // last_ckp: čas posledního přijatého zubu CKP.
   // normal_us: odhad běžné doby mezi dvěma sousedními zuby, tedy BEZ velké mezery.
@@ -71,6 +83,213 @@ struct EcuController {
   uint32_t injection_us = ECU_INJECTION_US;
   uint32_t last_control_us = 0;
   bool have_control = false;
+
+  bool vehicle_mode = false, vehicle_inputs_valid = false;
+  EcuVehicleInputs sensors = {};
+  uint32_t sensor_time_us = 0, car_started_us = 0;
+  bool car_started = false, overrun_cut = false, rpm_cut = false;
+  double idle_integral = 0, lambda_trim = 1, throttle_target = 0.06;
+  double ignition_advance_deg = ECU_ADVANCE_DEG;
+  uint32_t dwell_us = ECU_DWELL_US, car_faults = 0;
+  // 0 jízda, 1 volnoběh, 2 dojezd bez paliva, 3 omezovač, 4 ochranné vypnutí, 5 nouzový režim.
+  unsigned car_state = 0;
+
+  static double limit(double value, double low, double high) {
+    return fmax(low, fmin(high, value));
+  }
+
+  void set_vehicle_inputs(const EcuVehicleInputs &input, uint32_t now, bool enabled) {
+    if (enabled != vehicle_mode) {
+      idle_integral = 0;
+      lambda_trim = 1;
+      overrun_cut = rpm_cut = car_started = false;
+      throttle_target = 0.06;
+    }
+    vehicle_mode = enabled;
+    sensors = input;
+    sensor_time_us = now;
+    vehicle_inputs_valid = true;
+    if (!enabled) {
+      ignition_advance_deg = ECU_ADVANCE_DEG;
+      dwell_us = ECU_DWELL_US;
+    }
+  }
+
+  // Automobilní režim: APP -> vzduch/moment, samostatný volnoběh a dávka z MAF.
+  // Kalibrace odpovídá lokálnímu výukovému modelu, nikoli skutečnému motoru.
+  void update_vehicle_control(uint32_t now) {
+    if (!car_started) {
+      car_started = true;
+      car_started_us = now;
+    }
+    double dt = have_control ? limit((uint32_t)(now - last_control_us) / 1e6, 0.001, 0.1) : 0.01;
+    const EcuVehicleInputs &v = sensors;
+    car_faults = 0;
+    bool core = vehicle_inputs_valid && (uint32_t)(now - sensor_time_us) <= 300000;
+    // Neplatné hodnoty nesmějí propadnout do lround či integrátoru jako NaN.
+    const double raw[] = {v.tps,
+                          v.brake_fl,
+                          v.brake_fr,
+                          v.brake_rl,
+                          v.brake_rr,
+                          v.map_kpa,
+                          v.maf_g_s,
+                          v.iat_c,
+                          v.baro_kpa,
+                          v.coolant_c,
+                          v.oil_c,
+                          v.oil_kpa,
+                          v.battery_v,
+                          v.rail_kpa,
+                          v.fuel_l,
+                          v.exhaust_c,
+                          v.lambda_value,
+                          v.speed_kmh,
+                          v.wheel_fl,
+                          v.wheel_fr,
+                          v.wheel_rl,
+                          v.wheel_rr,
+                          v.brake,
+                          v.steer_deg,
+                          v.yaw_deg_s,
+                          v.ax,
+                          v.ay,
+                          v.input_rpm,
+                          v.output_rpm,
+                          v.gear,
+                          v.shifting,
+                          v.torque_limit,
+                          v.abs_active,
+                          v.esp_active,
+                          v.can_valid,
+                          v.auxiliary_load_nm,
+                          v.drivetrain_load_nm,
+                          v.cylinders};
+    for (unsigned i = 0; i < sizeof(EcuVehicleInputs) / sizeof(double); ++i)
+      if (!isfinite(raw[i]))
+        core = false;
+    core = core && v.map_kpa >= 5 && v.map_kpa <= 150 && v.iat_c > -50 && v.iat_c < 150 &&
+           v.baro_kpa > 40 && v.baro_kpa < 120 && v.cylinders >= 1 && v.cylinders <= 16 &&
+           v.coolant_c >= -40 && v.coolant_c <= 150 && v.battery_v > 0;
+    if (!core) {
+      car_faults = 1;
+      injection_us = 0;
+      throttle_target = 0;
+      car_state = 4;
+      requested_rpm = -1;
+      idle_integral = 0;
+      return;
+    }
+    bool can_ok = v.can_valid > 0.5;
+    if (!can_ok)
+      car_faults |= 2;
+    double idle_goal = 850 + limit((65 - v.coolant_c) * 4, 0, 250);
+    double pedal = accelerator;
+    if (v.brake > 0.15)
+      pedal = 0; // Brzda má přednost před současně sešlápnutým plynem.
+    bool idle = pedal < 0.03 && (fabs(v.speed_kmh) < 7 || v.gear == 0);
+    requested_rpm = idle ? idle_goal : -1;
+    double authority = can_ok ? limit(v.torque_limit, 0, 1) : 0.20;
+    if (v.shifting > 0.5)
+      authority = fmin(authority, 0.15);
+    if (v.coolant_c > 105)
+      authority = fmin(authority, limit((125 - v.coolant_c) / 20, 0, 1));
+    if (v.oil_c > 140 || v.exhaust_c > 900) {
+      authority = fmin(authority, 0.4);
+      car_faults |= 8;
+    }
+    if (v.battery_v < 10) {
+      authority = fmin(authority, 0.25);
+      car_faults |= 16;
+    }
+    // Kontrola prokluzu doplňuje momentový požadavek ESP; není to druhé řízení brzd.
+    double front = (fabs(v.wheel_fl) + fabs(v.wheel_fr)) / 2;
+    double rear = (fabs(v.wheel_rl) + fabs(v.wheel_rr)) / 2;
+    double road = fmax(fabs(v.speed_kmh), rear);
+    if (road > 10 && front > road * 1.25 + 2 && pedal > 0.05) {
+      authority = fmin(authority, 0.5);
+      car_faults |= 64;
+    }
+    // Veličiny podvozku a hřídelí slouží pro věrohodnost dat, ne pro umělé obohacování.
+    if (fabs(v.steer_deg) > 35 || fabs(v.yaw_deg_s) > 200 || fabs(v.ax) > 30 || fabs(v.ay) > 30 ||
+        v.tps < 0 || v.tps > 1 || v.brake_fl < 0 || v.brake_fl > 100 || v.brake_fr < 0 ||
+        v.brake_fr > 100 || v.brake_rl < 0 || v.brake_rl > 100 || v.brake_rr < 0 ||
+        v.brake_rr > 100 || fabs(v.input_rpm - rpm) > 2000 || fabs(v.output_rpm) > 20000 ||
+        v.gear < -1 || v.gear > 6 || v.abs_active < 0 || v.abs_active > 1 || v.esp_active < 0 ||
+        v.esp_active > 1)
+      car_faults |= 128;
+    double idle_error = idle_goal - rpm;
+    double feedforward =
+        0.02 + limit(v.auxiliary_load_nm + fmax(0, v.drivetrain_load_nm), 0, 120) / 600;
+    double idle_open = limit(feedforward + idle_error * 0.00045 + idle_integral, 0, 0.6);
+    if (idle && !overrun_cut && authority > 0.4) {
+      double candidate = limit(idle_integral + idle_error * dt * 0.00012, -0.12, 0.35);
+      // Anti-windup: integrátor neroste do nasycení na horním ani dolním limitu.
+      if ((idle_open > 0 && idle_open < 0.6) || (idle_open <= 0 && idle_error > 0) ||
+          (idle_open >= 0.6 && idle_error < 0))
+        idle_integral = candidate;
+    } else
+      idle_integral *= fmax(0, 1 - dt * 2);
+    throttle_target = limit(fmax(pedal * authority, idle ? idle_open : 0), 0, 1);
+    if (!can_ok)
+      throttle_target = fmin(throttle_target, 0.20);
+    if (v.shifting > 0.5)
+      throttle_target = fmin(throttle_target, 0.10);
+    double rpm_limit = v.gear == 0 ? 4000 : 6500;
+    if (rpm > rpm_limit)
+      rpm_cut = true;
+    if (rpm < rpm_limit - 250)
+      rpm_cut = false;
+    if (pedal < 0.02 && fabs(v.speed_kmh) > 7 && v.gear != 0 && v.shifting < 0.5) {
+      if (rpm > 1400)
+        overrun_cut = true;
+      if (rpm < 1100)
+        overrun_cut = false;
+    } else
+      overrun_cut = false;
+    bool oil_fault = (uint32_t)(now - car_started_us) > 2000000 && rpm > 1100 && v.oil_kpa < 60;
+    bool shutdown = oil_fault || v.coolant_c >= 125 || v.fuel_l <= 0 || v.rail_kpa < 80;
+    if (oil_fault)
+      car_faults |= 4;
+    if (v.fuel_l <= 0)
+      car_faults |= 256;
+    if (v.rail_kpa < 80)
+      car_faults |= 512;
+    if (v.coolant_c >= 125)
+      car_faults |= 8;
+    // Air charge: MAF jako hlavní zdroj, MAP/IAT/barometr jako kontrola a fallback.
+    double density = 1.184 * (v.map_kpa / v.baro_kpa) * (298.15 / (v.iat_c + 273.15));
+    double air_map = (0.0005 * v.cylinders) * density * 1000 * 0.80 * fmax(rpm, 400) / 120;
+    double air = v.maf_g_s;
+    if (air <= 0 || air > 250 || fabs(air - air_map) > fmax(3, air_map * 0.8)) {
+      air = air_map;
+      car_faults |= 32;
+    }
+    bool closed_loop = v.coolant_c > 65 && !idle && pedal > 0.03 && !overrun_cut && !rpm_cut &&
+                       !shutdown && v.shifting < 0.5 && (uint32_t)(now - car_started_us) > 3000000;
+    if (v.lambda_value >= 0.6 && v.lambda_value <= 1.6 && closed_loop)
+      lambda_trim = limit(lambda_trim + (v.lambda_value - 1) * dt * 0.08, 0.90, 1.10);
+    double enrichment = 1 + limit((60 - v.coolant_c) / 400, 0, 0.20);
+    double per_second = fmax(rpm, 400) / 120 * v.cylinders;
+    double pressure = sqrt(limit(v.rail_kpa, 80, 600) / 350);
+    double deadtime = limit(0.50 + (14.2 - v.battery_v) * 0.07, 0.35, 1.10);
+    double pulse_ms =
+        air / (14.7 * per_second * 8.0 * pressure) * 1000 * lambda_trim * enrichment + deadtime;
+    // Reálná délka pulzu se musí vejít do příslušného pracovního cyklu.
+    double max_pulse = fmin(12.0, 120000 / fmax(rpm, 400) * 0.75);
+    if (shutdown || rpm_cut || overrun_cut) {
+      injection_us = 0;
+      if (shutdown || rpm_cut)
+        throttle_target = 0;
+      car_state = shutdown ? 4 : rpm_cut ? 3 : 2;
+      idle_integral = 0;
+    } else {
+      injection_us = (uint32_t)lround(limit(pulse_ms, 0, max_pulse) * 1000);
+      car_state = !can_ok ? 5 : idle ? 1 : 0;
+    }
+    ignition_advance_deg = (v.exhaust_c > 900 || v.coolant_c > 110) ? 8 : 15;
+    dwell_us = (uint32_t)lround(limit(2000 * 14.2 / v.battery_v, 1500, 3500));
+  }
 
   void set_accelerator(double position) {
     accelerator = isfinite(position) ? fmax(0, fmin(1, position)) : 0;
@@ -256,7 +475,10 @@ struct EcuController {
   // Nejprve zkontrolujeme snímač, potom konce pulzů a nakonec jejich nové začátky.
   template <class Write> void tick(uint32_t now, Write write) {
     if (!have_control || (uint32_t)(now - last_control_us) >= 10000) {
-      update_control(now);
+      if (vehicle_mode)
+        update_vehicle_control(now);
+      else
+        update_control(now);
       // Omezení výstupu zůstává společné i po studentské změně algoritmu.
       if (injection_us > 100000)
         injection_us = 100000;
@@ -320,11 +542,11 @@ struct EcuController {
         // než referenční bod fire. Výchozí předstih je 15°, dwell je 2000 us = 2 ms.
         // Při 1000 rpm se za 2 ms otočí klika o 12°: start nabíjení je 15 + 12 = 27°
         // před fire. wrap převede například -27° na 693° předchozího cyklu.
-        double charge = wrap(fire - ECU_ADVANCE_DEG - ECU_DWELL_US * 6 * rpm / 1e6);
+        double charge = wrap(fire - ignition_advance_deg - dwell_us * 6 * rpm / 1e6);
         if (!coil_on[channel] && crossed(last_phase, phase, charge)) {
           write(true, channel, ECU_IGN_ACTIVE);
           coil_on[channel] = true;
-          coil_end[channel] = now + ECU_DWELL_US;
+          coil_end[channel] = now + dwell_us;
         }
       }
     // Zapamatujeme si úhel pro další porovnání. První tick po synchronizaci

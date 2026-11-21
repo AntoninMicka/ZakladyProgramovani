@@ -49,6 +49,12 @@ class EngineModel:
         self.load_nm, self.target_rpm = DEFAULT_LOAD_NM, None
         self.drivetrain_load_nm = 0.0
         self.torque_factor = 1.0
+        self.vehicle_physics = False
+        self.air_throttle = self.throttle_target = 0.06
+        self.fuel_rail_kpa = 350.0
+        self.battery_v = 14.2
+        self.intake_c = 25.0
+        self.baro_kpa = 101.3
         self.open_injectors, self.charging = {}, {}
         self.last_injection_us, self.last_dwell_us = {}, {}
 
@@ -111,20 +117,64 @@ class EngineModel:
             if signal == "injector":
                 self.injector_ms = durations[channel] / 1000
 
+    def air_charge(self):
+        map_kpa = 12.0 + 88.0 * self.air_throttle
+        density = 1.184 * map_kpa / self.baro_kpa * 298.15 / (self.intake_c + 273.15)
+        maf = self.config.cylinders * 0.0005 * density * 1000 * 0.80 * max(self.rpm, 0) / 120
+        return map_kpa, maf
+
+    def effective_injection_ms(self):
+        if not self.vehicle_physics:
+            return self.injector_ms
+        deadtime = max(0.35, min(1.10, 0.50 + (14.2 - self.battery_v) * 0.07))
+        pressure = math.sqrt(max(0, min(600, self.fuel_rail_kpa)) / 350)
+        return max(0, self.injector_ms - deadtime) * pressure
+
+    def actual_lambda(self):
+        _, maf = self.air_charge()
+        fuel_g_s = (
+            self.effective_injection_ms()
+            / 1000
+            * 8.0
+            * max(0, self.rpm)
+            / 120
+            * self.config.cylinders
+        )
+        return max(0.6, min(2.0, maf / (14.7 * fuel_g_s))) if fuel_g_s > 1e-9 else 2.0
+
     def combustion_torque(self):
         """Moment od paliva a předstihu; pedál se zde podruhé nenásobí."""
-        fuel = max(0, min(1.5, self.injector_ms / REFERENCE_INJECTION_MS))
+        fuel = max(0, min(1.5, self.effective_injection_ms() / REFERENCE_INJECTION_MS))
         spark = max(
             0.1,
             1 - abs(self.ignition_deg - REFERENCE_ADVANCE_DEG) / SPARK_TOLERANCE_DEG,
         )
-        return REFERENCE_TORQUE_NM * self.config.cylinders / REFERENCE_CYLINDERS * fuel * spark * self.torque_factor
+        mixture = (
+            max(0.05, 1 - abs(self.actual_lambda() - 1) * 0.35) if self.vehicle_physics else 1.0
+        )
+        return (
+            REFERENCE_TORQUE_NM
+            * self.config.cylinders
+            / REFERENCE_CYLINDERS
+            * fuel
+            * spark
+            * self.torque_factor
+            * mixture
+        )
 
     def step(self, dt):
+        if self.vehicle_physics:
+            self.air_throttle += (self.throttle_target - self.air_throttle) * (
+                1 - math.exp(-dt / 0.060)
+            )
         before = self.rpm
         torque = self.combustion_torque()
         acceleration = (
-            torque - self.load_nm - self.drivetrain_load_nm - FRICTION_BASE_NM - FRICTION_PER_RPM * self.rpm
+            torque
+            - self.load_nm
+            - self.drivetrain_load_nm
+            - FRICTION_BASE_NM
+            - FRICTION_PER_RPM * self.rpm
         ) / self.config.inertia
         self.rpm = (
             self.target_rpm
@@ -146,6 +196,18 @@ class EngineModel:
         mixture = (
             reference_air / max(self.injector_ms, 0.1) if reference_air or self.injector_ms else 1
         )
+        vehicle_sensors = {}
+        if self.vehicle_physics:
+            map_kpa, maf = self.air_charge()
+            vehicle_sensors = {
+                "map_kpa": map_kpa,
+                "maf_g_s": maf,
+                "tps": self.air_throttle,
+                "iat_c": self.intake_c,
+                "lambda_value": self.actual_lambda(),
+                "air_throttle": self.air_throttle,
+                "effective_injection_ms": self.effective_injection_ms(),
+            }
         return {
             "rpm": self.rpm,
             "accelerator": self.throttle,
@@ -168,4 +230,5 @@ class EngineModel:
             "coil_charging": sorted(self.charging),
             "last_injection_us": dict(self.last_injection_us),
             "last_dwell_us": dict(self.last_dwell_us),
+            **vehicle_sensors,
         }

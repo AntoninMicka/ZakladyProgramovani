@@ -96,6 +96,34 @@ int ecu_advance(HostEcu *host, uint64_t end, double accelerator, const InputEdge
   host->now = end;
   return overflow ? -2 : static_cast<int>(output);
 }
+size_t ecu_vehicle_inputs_size() {
+  return sizeof(EcuVehicleInputs);
+}
+void ecu_set_vehicle_inputs(HostEcu *host, const EcuVehicleInputs *input, uint64_t now,
+                            unsigned enabled) {
+  host->ecu.set_vehicle_inputs(*input, static_cast<uint32_t>(now), enabled != 0);
+}
+unsigned ecu_vehicle_mode(const HostEcu *host) {
+  return host->ecu.vehicle_mode;
+}
+unsigned ecu_car_state(const HostEcu *host) {
+  return host->ecu.car_state;
+}
+uint32_t ecu_car_faults(const HostEcu *host) {
+  return host->ecu.car_faults;
+}
+double ecu_throttle_target(const HostEcu *host) {
+  return host->ecu.throttle_target;
+}
+double ecu_lambda_trim(const HostEcu *host) {
+  return host->ecu.lambda_trim;
+}
+double ecu_advance_deg(const HostEcu *host) {
+  return host->ecu.ignition_advance_deg;
+}
+uint32_t ecu_dwell_us(const HostEcu *host) {
+  return host->ecu.dwell_us;
+}
 double ecu_requested_rpm(const HostEcu *host) {
   return host->ecu.requested_rpm;
 }

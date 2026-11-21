@@ -290,6 +290,15 @@ class VehiclePanel:
             elif isinstance(value, float):
                 value = f"{value:.3f}"
             self.sensors.insert("", "end", text=SENSOR_LABELS.get(key, key), values=(value,))
+        ecu = vehicle.get("ecu", {})
+        if ecu:
+            self.sensors.insert("", "end", text="ECU · režim", values=(ecu.get("state_name", "—"),))
+            self.sensors.insert(
+                "",
+                "end",
+                text="ECU · diagnostika",
+                values=(", ".join(ecu.get("fault_names", [])) or "bez závad",),
+            )
         self.frames.delete(*self.frames.get_children())
         bus = vehicle["can"]
         self.can_summary.set(

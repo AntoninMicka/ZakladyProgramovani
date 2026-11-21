@@ -172,6 +172,8 @@ class VehicleModel:
         self.drive_torque = [0.0] * 4
         self.brake_pressure = [0.0] * 4
         self.abs_active = self.esp_active = self.can_fault = False
+        self.motor_sensors = {}
+        self.ecu_status = {}
         self.cylinders = 4
         self.last_rpm = self.last_torque = self.last_pedal = self.last_fuel_us = 0.0
 
@@ -282,6 +284,58 @@ class VehicleModel:
             self.torque_factor = 1.0
             self.abs_active = self.esp_active = False
 
+    def ecu_inputs(self, model):
+        """Lokální motorové senzory a pouze doručené CAN požadavky podvozku."""
+        motor = model.snapshot()
+        sensor = self.sensors()
+        now = self.time_us
+        wheels, chassis, tcu, esc = (self.bus.read(i, now) for i in (0x110, 0x120, 0x200, 0x210))
+        valid = bool(wheels and chassis and tcu and esc and not esc["fault"])
+        w = wheels or {}
+        c = chassis or {}
+        t = tcu or {}
+        e = esc or {}
+        return dict(
+            map_kpa=motor["map_kpa"],
+            maf_g_s=motor.get("maf_g_s", sensor["maf_g_s"]),
+            iat_c=motor["iat_c"],
+            baro_kpa=sensor["barometric_pressure_kpa"],
+            coolant_c=self.coolant,
+            oil_c=self.oil_temp,
+            oil_kpa=sensor["oil_pressure_kpa"],
+            battery_v=sensor["battery_v"],
+            rail_kpa=sensor["fuel_rail_pressure_kpa"],
+            fuel_l=self.fuel_l,
+            exhaust_c=sensor["exhaust_temp_c"],
+            lambda_value=motor["lambda_value"],
+            speed_kmh=c.get("speed_cms", 0) * 0.036,
+            wheel_fl=w.get("fl_cms", 0) * 0.036,
+            wheel_fr=w.get("fr_cms", 0) * 0.036,
+            wheel_rl=w.get("rl_cms", 0) * 0.036,
+            wheel_rr=w.get("rr_cms", 0) * 0.036,
+            brake=max(self.brake, c.get("brake_permille", 0) / 1000),
+            steer_deg=math.degrees(c.get("steer_mrad", 0) / 1000),
+            yaw_deg_s=math.degrees(c.get("yaw_mrad_s", 0) / 1000),
+            ax=self.ax,
+            ay=self.ay,
+            input_rpm=sensor["gearbox_input_rpm"],
+            output_rpm=sensor["gearbox_output_rpm"],
+            gear=t.get("gear", 0),
+            shifting=t.get("shifting", 0),
+            torque_limit=e.get("torque_pct", 100) / 100,
+            abs_active=e.get("abs", 0),
+            esp_active=e.get("esp", 0),
+            can_valid=float(valid),
+            auxiliary_load_nm=model.load_nm,
+            drivetrain_load_nm=self.engine_load_nm,
+            cylinders=model.config.cylinders,
+            tps=motor["tps"],
+            brake_fl=e.get("fl", 0) / 255 * 100,
+            brake_fr=e.get("fr", 0) / 255 * 100,
+            brake_rl=e.get("rl", 0) / 255 * 100,
+            brake_rr=e.get("rr", 0) / 255 * 100,
+        )
+
     def step(self, dt, rpm, torque_nm, pedal, injection_us, cylinders=4):
         if not math.isfinite(dt) or not 0 < dt <= 0.1 or round(dt * 1e6) < 1:
             raise ValueError("Krok vozidla musí být 1 µs až 100 ms")
@@ -309,6 +363,10 @@ class VehicleModel:
         # V nízkých otáčkách spojku rozepneme, aby výukový model nezhasl při zastavení.
         if self.last_rpm < 650 and clutch > 0:
             clutch *= clamp((self.last_rpm - 400) / 250, 0, 1)
+        # Zabrzděný automat netlačí plnou spojkou proti stojícím kolům.
+        # Výukový creep odpovídá omezenému přenosu měniče při zastavení.
+        if self.brake > 0.15 and abs(self.speed) < 1.5 and clutch > 0:
+            clutch = min(clutch, 12.0)
         self.engine_load_nm = clutch
         # Otevřený přední diferenciál: stejný hnací moment vlevo a vpravo.
         axle = clutch * ratio
@@ -359,12 +417,14 @@ class VehicleModel:
         target_temp = 90 + min(15, max(0, self.last_torque) / 15) if running else 25
         self.coolant += (target_temp - self.coolant) * dt / 90
         self.oil_temp += (self.coolant - self.oil_temp) * dt / 120
-        # Pouze odhad spotřeby z dávky a počtu cyklů čtyřválce.
-        self.fuel_l = max(
-            0,
-            self.fuel_l
-            - self.last_fuel_us / 1e6 * self.last_rpm / 120 * self.cylinders * 0.003 * dt,
+        # V automobilním režimu stejný efektivní průtok jako ve výpočtu lambda.
+        effective = self.motor_sensors.get("effective_injection_ms")
+        fuel_l_s = (
+            effective / 1000 * self.last_rpm / 120 * self.cylinders * 8.0 / 745
+            if effective is not None
+            else self.last_fuel_us / 1e6 * self.last_rpm / 120 * self.cylinders * 0.003
         )
+        self.fuel_l = max(0, self.fuel_l - fuel_l_s * dt)
 
     def sensors(self):
         return {
@@ -385,7 +445,9 @@ class VehicleModel:
             "oil_temp_c": self.oil_temp,
             "oil_pressure_kpa": clamp(self.last_rpm * 0.12, 0, 500),
             "battery_v": 14.2 if self.last_rpm > 500 else 12.3,
-            "maf_g_s": max(0, self.last_rpm / 60 * 0.04 * (0.2 + self.last_pedal)),
+            "maf_g_s": self.motor_sensors.get(
+                "maf_g_s", max(0, self.last_rpm / 60 * 0.04 * (0.2 + self.last_pedal))
+            ),
             "fuel_level_l": self.fuel_l,
             "gearbox_input_rpm": self.last_rpm,
             "gearbox_output_rpm": sum(self.wheel_omega[:2])
@@ -422,4 +484,5 @@ class VehicleModel:
             "sensors": self.sensors(),
             "dashboard": dashboard(self.bus, self.time_us),
             "can": self.bus.snapshot(),
+            "ecu": dict(self.ecu_status),
         }
