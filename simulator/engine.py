@@ -21,6 +21,7 @@ class Engine(Thread):
         collect_events=False,
         max_wall_lag=0.25,
         max_future_event_us=2000000,
+        vehicle=False,
     ):
         super().__init__(name="engine", daemon=False)
         if not 0 < speed <= 1:
@@ -38,6 +39,8 @@ class Engine(Thread):
         self.local_ecu = None
         self.collect_events = collect_events
         self.config, self.model = config, EngineModel(config)
+        from vehicle import VehicleModel
+        self.vehicle = VehicleModel() if vehicle else None
         self.signals = signals or SignalGenerator()
         self.lock, self.stop_event, self.wake = RLock(), Event(), Event()
         self.paused = False
@@ -60,6 +63,22 @@ class Engine(Thread):
     def command(self, data):
         self._enqueue(("command", dict(data)))
 
+    def set_vehicle_enabled(self, enabled):
+        from vehicle import VehicleModel
+        with self.lock:
+            if enabled and self.vehicle is None:
+                self.vehicle = VehicleModel(start_us=self.clock.time_us)
+                # CAN i podvozek navazují na stejný virtuální čas motoru.
+            elif not enabled:
+                self.vehicle = None
+            self.model.drivetrain_load_nm = 0.0
+            self.model.torque_factor = 1.0
+
+    def vehicle_command(self, data):
+        if self.vehicle is None:
+            raise ValueError("Režim auta není zapnutý")
+        self._enqueue(("vehicle", dict(data)))
+
     def ecu_event(self, data):
         self._enqueue(("event", dict(data)))
 
@@ -79,6 +98,8 @@ class Engine(Thread):
         with self.lock:
             return {
                 **self.model.snapshot(),
+                **({"vehicle": self.vehicle.snapshot(), "coolant_c": self.vehicle.coolant,
+                    "clt_c": self.vehicle.coolant} if self.vehicle is not None else {}),
                 "time_s": self.clock.time_us / 1e6,
                 "simulation_time_us": self.clock.time_us,
                 "paused": self.paused,
@@ -90,6 +111,8 @@ class Engine(Thread):
         try:
             if kind == "command":
                 self.model.command(data)
+            elif kind == "vehicle" and self.vehicle is not None:
+                self.vehicle.command(data)
             else:
                 self.model.event(data)
         except (ValueError, TypeError, OverflowError):
@@ -111,7 +134,7 @@ class Engine(Thread):
                     break
                 if generation != self.generation:
                     continue
-                if kind == "command":
+                if kind in ("command", "vehicle"):
                     self._apply(kind, data)
                 else:
                     timestamp = data.get("simulation_time_us")
@@ -147,6 +170,13 @@ class Engine(Thread):
                 self._apply("event", data)
                 cursor = applied
             self._advance_segment(cursor, end_us)
+            # Auto integrujeme JEDNOU po dokončení motorového makrokroku.
+            # Predikce CKP v _advance_segment nesmí posunout podvozek podruhé.
+            if self.vehicle is not None:
+                self.vehicle.step(self.dt, self.model.rpm, self.model.combustion_torque(),
+                                  self.model.throttle, self.model.injector_ms * 1000, self.config.cylinders)
+                self.model.drivetrain_load_nm = self.vehicle.engine_load_nm
+                self.model.torque_factor = self.vehicle.torque_factor
             self.clock.advance()
 
     def _advance_segment(self, start_us, end_us):
@@ -206,6 +236,9 @@ class Engine(Thread):
     def reset(self):
         with self.lock:
             self.model = EngineModel(self.config)
+            if self.vehicle is not None:
+                from vehicle import VehicleModel
+                self.vehicle = VehicleModel(self.vehicle.config)
             self.clock.reset()
             if self.local_ecu is not None:
                 self.local_ecu.reset(0, self.model.throttle)

@@ -11,6 +11,7 @@ from visualization import cylinder_phase, piston_position
 from wokwi_gui import WokwiPanel
 from ecu_editor import EcuEditor
 from engine_diagram import EngineDiagram
+from vehicle_gui import VehiclePanel
 
 BG = "#0f172a"
 PANEL = "#1e293b"
@@ -37,7 +38,7 @@ class EngineView:
         self.telemetry = TelemetryBuffer()
         self.next_telemetry_wall = 0.0
         self.log_rows = 0
-        root.title("ECU Simulator · živý pohled na motor")
+        root.title("ECU Simulator · motor a auto")
         root.geometry("1180x940")
         root.minsize(960, 760)
         root.configure(bg=BG)
@@ -108,6 +109,11 @@ class EngineView:
         self.diagram_page = ttk.Frame(notebook, padding=10)
         notebook.add(self.diagram_page, text="Schéma motoru")
         self.engine_diagram = EngineDiagram(self.diagram_page, app)
+        self.vehicle_page = ttk.Frame(notebook, padding=10)
+        notebook.add(self.vehicle_page, text="Auto / palubní deska")
+        self.vehicle_panel = VehiclePanel(self.vehicle_page, app)
+        if app.engine.vehicle is not None:
+            notebook.select(self.vehicle_page)
         scrollbar = ttk.Scrollbar(body, orient="vertical")
         scrollbar.pack(side="right", fill="y")
         self.canvas = tk.Canvas(body, bg=BG, highlightthickness=0, yscrollcommand=scrollbar.set)
@@ -333,6 +339,8 @@ class EngineView:
             if self.speed.get() != current_speed:
                 self.speed.set(current_speed)
             self.update_telemetry(frame, diagnostics)
+            if self.notebook.select() == str(self.vehicle_page):
+                self.vehicle_panel.refresh(frame)
             if self.notebook.select() == str(self.diagram_page):
                 self.engine_diagram.refresh(frame, diagnostics)
             link = (

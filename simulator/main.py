@@ -27,6 +27,11 @@ def main():
         "--duration", type=float, help="Wall seconds; CLI default 15, GUI until closed"
     )
     parser.add_argument("--gui", action="store_true", help="Live desktop visualization (Tk)")
+    parser.add_argument("--vehicle", action="store_true", help="Enable whole-car teaching model and dashboard")
+    parser.add_argument("--selector", choices=["P", "R", "N", "D"], default="N")
+    parser.add_argument("--brake", type=float, default=0)
+    parser.add_argument("--steer", type=float, default=0, help="Steering angle in degrees (-30..30)")
+    parser.add_argument("--road-mu", type=float, default=0.85, help="Road friction (0.05..1.2)")
     parser.add_argument("--throttle", type=float, default=0.35)
     parser.add_argument("--rate", type=float, default=20)
     parser.add_argument("--step-us", type=int, default=1000)
@@ -77,12 +82,17 @@ def main():
             args.wokwi_hardware,
             args.hardware_mode,
             args.lookahead_us,
+            vehicle=args.vehicle,
         )
         initial = {"throttle": args.throttle, "load_nm": args.load}
         if args.rpm is not None:
             initial["rpm"] = args.rpm
         # Validace před spuštěním vláken.
         app.configure_initial(initial)
+        if args.vehicle:
+            app.engine.vehicle.command({"selector": args.selector, "brake": args.brake,
+                                        "steer_deg": args.steer, "mu_left": args.road_mu,
+                                        "mu_right": args.road_mu})
     except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         parser.error(str(exc))
     output = args.telemetry.open("w", encoding="utf-8", buffering=1) if args.telemetry else None

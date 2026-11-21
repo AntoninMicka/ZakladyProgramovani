@@ -91,6 +91,15 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertIn("Načteno kontaktů: 6", result.stdout)
 
+    def test_car_launcher_enables_vehicle_and_gui_without_fixed_rpm(self):
+        project = get_project("ecu")
+        action = next(a for a in project.actions if a.id == "auto")
+        plan = make_plan(project, action)
+        self.assertIn("--vehicle", plan.commands[0])
+        self.assertIn("--gui", plan.commands[0])
+        self.assertNotIn("--rpm", plan.commands[0])
+        self.assertEqual(plan.cwd, ROOT / "simulator")
+
     def test_missing_wokwi_token_fails_before_build(self):
         p = get_project("arduino")
         with patch.dict(os.environ, {}, clear=True):

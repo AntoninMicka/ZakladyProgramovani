@@ -19,6 +19,7 @@ class Supervisor:
         hardware=False,
         hardware_mode="buffered",
         lookahead_us=100000,
+        vehicle=False,
     ):
         self.mode, self.url, self.baudrate = mode, url, baudrate
         self.hardware_options = dict(
@@ -27,7 +28,7 @@ class Supervisor:
         self.transport_factory = None
         self.lifecycle_lock = RLock()
         self.closing = Event()
-        self.engine = Engine(dt=dt, speed=speed, config=config, signals=signals)
+        self.engine = Engine(dt=dt, speed=speed, config=config, signals=signals, vehicle=vehicle)
         self.initial_commands = {
             "throttle": self.engine.model.throttle,
             "load_nm": self.engine.model.load_nm,

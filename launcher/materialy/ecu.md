@@ -56,3 +56,20 @@ spouštěč nedoplňuje.
 Pro tento pokus nepoužívej parametr `--rpm`: ten zapne stolici s přímo drženými
 otáčkami a skryl by chyby regulátoru. Při stejné poloze pedálu měň zátěž a sleduj,
 zda se upravený řadič dokáže vrátit k cílovým otáčkám.
+
+## Auto, palubní deska a CAN
+
+Akce **Spustit simulaci auta s palubní deskou** otevře nový pohled nad týmž motorem
+a C++ regulátorem. V záložce **Auto / palubní deska** zvol `D`, přidej plyn a sleduj
+řazení šestistupňové převodovky. Brzdou a volantem ovládej podvozek, přilnavostí
+vlevo/vpravo připrav kluzký či nestejný povrch. ABS moduluje jednotlivé brzdy,
+ESP přibrzďuje kolo a omezuje moment při rozdílu požadovaného a skutečného stáčení.
+Převodovka, otevřený přední diferenciál a kola se zpětně projeví v zatížení motoru.
+
+Pod přístroji jsou nové senzory a monitor CAN s ID, bajty a dekódovanými hodnotami.
+Při vypnutí CAN po timeoutu zmizí zastaralá data přístrojů a pohon přejde do neutrálu;
+základní brzdy zůstávají funkční. Pauza a zpomalení platí pro celé auto.
+
+Jde o první výukový model, nikoli detailní dynamiku skutečného auta. Přenos CAN je
+lokální logická simulace, bez fyzického transceiveru. Podrobný návod a další etapy:
+[model auta](../../simulator/docs/auto.md).

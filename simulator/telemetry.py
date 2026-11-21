@@ -29,6 +29,11 @@ def format_sample(state, bridge, wall_elapsed_s):
             f" ECU_fuel={controller.get('injection_us', 0)}us"
             f" ECU_rpm_goal={goal if goal is not None else 'off'}"
         )
+    vehicle = state.get("vehicle")
+    if vehicle:
+        text += (f" CAR={vehicle['speed_kmh']:.1f}km/h gear={vehicle['gear']}"
+                 f" ABS={vehicle['abs_active']} ESP={vehicle['esp_active']}"
+                 f" CAN={vehicle['can']['delivered']}/{vehicle['can']['dropped']}")
     hardware = bridge.get("hardware")
     if hardware:
         text += (

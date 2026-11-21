@@ -1,4 +1,4 @@
-# ECU Simulator – druhá fáze
+# ECU Simulator – motor a první model auta
 
 Výukový SIL čtyřtaktního motoru: Python model v samostatném vlákně,
 virtuální čas, CKP/CMP, události ECU a obnovitelné RFC2217 spojení.
@@ -8,6 +8,15 @@ Výchozí motor má čtyři válce a CKP 60-2. Nejde o kalibrovaný model spalov
 build firmware a WASM a Wokwi lint jsou ověřené. Běh uzavřené smyčky ve Wokwi
 ani přesnost virtuálních pinů zatím ověřené nejsou: CLI nemá `WOKWI_CLI_TOKEN`.
 Podrobnosti a postup přijetí jsou v [akceptaci](docs/acceptance.md).
+
+## Nově: simulace auta
+
+Režim **Auto / palubní deska** přidává automatickou převodovku s TCU, spojku,
+otevřený diferenciál, čtyři kola, ABS/ESP, další senzory a lokální virtuální CAN.
+Spusť `python main.py --gui --vehicle`, zvol `D` a přidej pedál. Ve společném
+spouštěči je akce **Spustit simulaci auta s palubní deskou**. V původním GUI
+lze model zapnout také v nové záložce. Návod, CAN protokol, omezení, ověření a další
+etapy jsou v [dokumentaci modelu auta](docs/auto.md).
 
 ## Linux: instalace a spuštění
 

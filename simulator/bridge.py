@@ -249,7 +249,9 @@ class RFC2217Bridge(Bridge):
             }
         state["bridge_epoch"] = self.hardware_session
         state["simulation_speed"] = self.engine.speed
-        packet = self.packet("engine_state", state, state["simulation_time_us"])
+        # CAN historie a palubní deska patří lokálnímu GUI, nikoli UART protokolu MCU.
+        wire_state = {key: value for key, value in state.items() if key != "vehicle"}
+        packet = self.packet("engine_state", wire_state, state["simulation_time_us"])
         with self.lock:
             self.pending[packet["sequence"]] = (
                 monotonic(),

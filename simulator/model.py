@@ -47,6 +47,8 @@ class EngineModel:
             DEFAULT_ADVANCE_DEG,
         )
         self.load_nm, self.target_rpm = DEFAULT_LOAD_NM, None
+        self.drivetrain_load_nm = 0.0
+        self.torque_factor = 1.0
         self.open_injectors, self.charging = {}, {}
         self.last_injection_us, self.last_dwell_us = {}, {}
 
@@ -109,16 +111,20 @@ class EngineModel:
             if signal == "injector":
                 self.injector_ms = durations[channel] / 1000
 
-    def step(self, dt):
-        before = self.rpm
+    def combustion_torque(self):
+        """Moment od paliva a předstihu; pedál se zde podruhé nenásobí."""
         fuel = max(0, min(1.5, self.injector_ms / REFERENCE_INJECTION_MS))
         spark = max(
             0.1,
             1 - abs(self.ignition_deg - REFERENCE_ADVANCE_DEG) / SPARK_TOLERANCE_DEG,
         )
-        torque = REFERENCE_TORQUE_NM * self.config.cylinders / REFERENCE_CYLINDERS * fuel * spark
+        return REFERENCE_TORQUE_NM * self.config.cylinders / REFERENCE_CYLINDERS * fuel * spark * self.torque_factor
+
+    def step(self, dt):
+        before = self.rpm
+        torque = self.combustion_torque()
         acceleration = (
-            torque - self.load_nm - FRICTION_BASE_NM - FRICTION_PER_RPM * self.rpm
+            torque - self.load_nm - self.drivetrain_load_nm - FRICTION_BASE_NM - FRICTION_PER_RPM * self.rpm
         ) / self.config.inertia
         self.rpm = (
             self.target_rpm

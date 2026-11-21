@@ -155,6 +155,8 @@ PROJECTS = (
                 note="Mock používá společnou C++ ECU. Pro studentskou regulaci nepoužívejte stolici --rpm.",
             ),
             Action("konzole", "Spustit ECU Mock na 10 s v konzoli", "ecu_cli"),
+            Action("auto", "Spustit simulaci auta s palubní deskou", "vehicle_gui",
+                   note="Motor + TCU, převodovka, diferenciál, ABS/ESP a virtuální CAN. Zvolte D, ovládejte pedál, brzdu a volant."),
             Action("editor", "Otevřít ECU projekt ve VSCodiu / VS Code", "editor"),
         ),
     ),
@@ -239,7 +241,7 @@ def make_plan(project, action):
     kind = action.kind
     if kind == "python":
         commands = [(python_for(project), "-u", str(directory / action.source))]
-    elif kind in ("ecu_gui", "ecu_cli"):
+    elif kind in ("ecu_gui", "ecu_cli", "vehicle_gui"):
         command = [
             python_for(project),
             "-u",
@@ -247,7 +249,9 @@ def make_plan(project, action):
             "--mode",
             "mock",
         ]
-        command += ["--gui"] if kind == "ecu_gui" else ["--duration", "10"]
+        command += ["--gui"] if kind in ("ecu_gui", "vehicle_gui") else ["--duration", "10"]
+        if kind == "vehicle_gui":
+            command += ["--vehicle"]
         commands = [tuple(command)]
     elif kind == "c":
         compiler = find_tool(("gcc", "clang"))
