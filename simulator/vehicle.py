@@ -153,6 +153,7 @@ class VehicleModel:
         self.esc = StabilityController()
         self.speed = self.distance = self.yaw_rate = self.heading = 0.0
         self.ax = self.ay = 0.0
+        self.surface_drag_n = 0.0
         self.wheel_omega = [0.0] * 4
         self.brake = self.steer = self.grade = 0.0
         self.mu_left = self.mu_right = 0.85
@@ -340,7 +341,8 @@ class VehicleModel:
             self.wheel_omega[i] = new_omega
         drag = 0.5 * 1.225 * c.drag_area * self.speed * abs(self.speed)
         rolling = c.mass_kg * 9.81 * 0.012 * math.tanh(self.speed / 0.5)
-        self.ax = (sum(forces) - drag - rolling) / c.mass_kg - 9.81 * self.grade
+        surface_drag = self.surface_drag_n * math.tanh(self.speed / 0.5)
+        self.ax = (sum(forces) - drag - rolling - surface_drag) / c.mass_kg - 9.81 * self.grade
         old_speed = self.speed
         self.speed += self.ax * dt
         if self.brake > 0 and old_speed * self.speed < 0 and abs(old_speed) < 0.1:

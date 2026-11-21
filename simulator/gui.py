@@ -13,6 +13,7 @@ from ecu_editor import EcuEditor
 from engine_diagram import EngineDiagram
 from vehicle_gui import VehiclePanel
 from vehicle_diagram import VehicleDiagram
+from driving_gui import DrivingPanel
 
 BG = "#0f172a"
 PANEL = "#1e293b"
@@ -125,6 +126,11 @@ class EngineView:
         self.vehicle_panel = VehiclePanel(self.vehicle_page, app)
         if app.engine.vehicle is not None:
             notebook.select(self.vehicle_page)
+        self.driving_page = ttk.Frame(notebook, padding=10)
+        notebook.add(self.driving_page, text="Jízda / okruh")
+        self.driving_panel = DrivingPanel(self.driving_page, app)
+        if app.engine.driving is not None:
+            notebook.select(self.driving_page)
         scrollbar = ttk.Scrollbar(body, orient="vertical")
         scrollbar.pack(side="right", fill="y")
         self.canvas = tk.Canvas(body, bg=BG, highlightthickness=0, yscrollcommand=scrollbar.set)
@@ -285,6 +291,10 @@ class EngineView:
         self.app.engine.set_speed(float(self.speed.get()))
 
     def toggle_pause(self):
+        if self.app.engine.driving is not None:
+            self.notebook.select(self.driving_page)
+            self.driving_panel.toggle_pause()
+            return
         if self.app.engine.snapshot()["paused"]:
             self.app.resume()
             self.pause_button.configure(text="Pozastavit")
@@ -303,6 +313,7 @@ class EngineView:
             return
         self.closed = True
         self.ecu_editor.close()
+        self.driving_panel.close()
         try:
             self.root.after_cancel(self.timer)
             self.root.destroy()
@@ -331,6 +342,7 @@ class EngineView:
         try:
             self.wokwi_panel.poll()
             self.ecu_editor.poll()
+            self.driving_panel.poll_input(self.notebook.select() == str(self.driving_page))
             frame = (
                 {"type": "sensors", **self.app.engine.snapshot()}
                 if self.wokwi_panel.busy
@@ -350,6 +362,8 @@ class EngineView:
             if self.speed.get() != current_speed:
                 self.speed.set(current_speed)
             self.update_telemetry(frame, diagnostics)
+            if self.notebook.select() == str(self.driving_page):
+                self.driving_panel.refresh(frame)
             if self.notebook.select() == str(self.vehicle_page):
                 self.vehicle_panel.refresh(frame)
             if self.notebook.select() == str(self.diagram_page):

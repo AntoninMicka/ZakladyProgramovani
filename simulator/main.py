@@ -28,6 +28,9 @@ def main():
     )
     parser.add_argument("--gui", action="store_true", help="Live desktop visualization (Tk)")
     parser.add_argument("--vehicle", action="store_true", help="Enable whole-car teaching model and dashboard")
+    parser.add_argument("--drive", action="store_true", help="Enable circuit driving (add --gui for view)")
+    parser.add_argument("--joypad", default="/dev/input/js0", help="Linux joystick device")
+    parser.add_argument("--joypad-config", type=Path, help="Joypad mapping JSON")
     parser.add_argument("--selector", choices=["P", "R", "N", "D"], default="N")
     parser.add_argument("--brake", type=float, default=0)
     parser.add_argument("--steer", type=float, default=0, help="Steering angle in degrees (-30..30)")
@@ -54,6 +57,10 @@ def main():
     )
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
+    if args.drive:
+        args.vehicle = True
+        if args.rpm is not None:
+            parser.error("--drive nelze kombinovat se stolici --rpm")
     if args.wokwi_hardware and args.mode != "wokwi":
         parser.error("--wokwi-hardware requires --mode wokwi")
     if args.baudrate is not None and not 1 <= args.baudrate <= 2000000:
@@ -84,6 +91,10 @@ def main():
             args.lookahead_us,
             vehicle=args.vehicle,
         )
+        from joypad import Mapping
+        app.joypad_mapping_manual = args.joypad_config is not None
+        app.joypad_device = args.joypad
+        app.joypad_mapping = Mapping.load(args.joypad_config) if args.joypad_config else Mapping()
         initial = {"throttle": args.throttle, "load_nm": args.load}
         if args.rpm is not None:
             initial["rpm"] = args.rpm
@@ -93,6 +104,8 @@ def main():
             app.engine.vehicle.command({"selector": args.selector, "brake": args.brake,
                                         "steer_deg": args.steer, "mu_left": args.road_mu,
                                         "mu_right": args.road_mu})
+        if args.drive:
+            app.engine.enable_driving()
     except (ValueError, TypeError, KeyError, OSError, RuntimeError) as exc:
         parser.error(str(exc))
     output = args.telemetry.open("w", encoding="utf-8", buffering=1) if args.telemetry else None

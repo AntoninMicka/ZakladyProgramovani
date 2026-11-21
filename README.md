@@ -24,7 +24,7 @@ spouštěč nástroje automaticky neinstaluje. Funguje i při spuštění z jin�
 | Arduino / sériová linka | editor, PlatformIO build, volitelný Wokwi CLI běh | LED, sériové příkazy, ADC, krokový motor |
 | Kvadrokoptéra | editor, PlatformIO build, volitelný Wokwi CLI běh | IMU, regulátor, ARM, směšování |
 | Databáze kontaktů (pátá hodina) | C++ a Python varianty, editor | objekty, šablony, generika, dědičnost, pět formátů kontaktů |
-| ECU simulátor / auto | GUI motoru a palubní desky, konzolový Mock, editor projektu | C++ ECU, TCU, převodovka, diferenciál, ABS/ESP a virtuální CAN |
+| ECU simulátor / auto | GUI, palubní deska, okruh s joypadem, konzolový Mock, editor projektu | C++ ECU, TCU, převodovka, diferenciál, ABS/ESP a virtuální CAN |
 
 **Pátá hodina:** [databáze kontaktů – šablony a dědičnost v C++](patahodina/README.md).
 Obě varianty lze přeložit a spustit ze společného spouštěče; vyžadují CMake, C++17 a libxml2.

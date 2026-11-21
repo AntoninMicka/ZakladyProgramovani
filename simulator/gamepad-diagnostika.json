@@ -1,0 +1,93 @@
+{
+  "device": "/dev/input/js0",
+  "name": "Wireless Controller",
+  "connected": true,
+  "layout": "Triggery ABS_RZ / ABS_Z (Xbox / DualShock layout)",
+  "error": "",
+  "axis_codes": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    16,
+    17
+  ],
+  "button_codes": [
+    304,
+    305,
+    307,
+    308,
+    310,
+    311,
+    312,
+    313,
+    314,
+    315,
+    316,
+    317,
+    318
+  ],
+  "axis_names": [
+    "ABS_X",
+    "ABS_Y",
+    "ABS_Z",
+    "ABS_RX",
+    "ABS_RY",
+    "ABS_RZ",
+    "ABS_HAT0X",
+    "ABS_HAT0Y"
+  ],
+  "axes": {
+    "0": -0.04727317117831965,
+    "1": -0.0315256202887051,
+    "2": -1,
+    "3": -0.05514694662312693,
+    "4": 0.0,
+    "5": -1,
+    "6": 0.0,
+    "7": 0.0
+  },
+  "buttons": {
+    "0": false,
+    "1": false,
+    "2": false,
+    "3": false,
+    "4": false,
+    "5": false,
+    "6": false,
+    "7": false,
+    "8": false,
+    "9": false,
+    "10": false,
+    "11": false,
+    "12": false
+  },
+  "mapping": {
+    "steer_axis": 0,
+    "throttle_axis": 5,
+    "brake_axis": 2,
+    "throttle_button": null,
+    "brake_button": null,
+    "pedal_deadzone": 0.04,
+    "steer_invert": false,
+    "throttle_invert": false,
+    "brake_invert": false,
+    "throttle_mode": "trigger",
+    "brake_mode": "trigger",
+    "deadzone": 0.08,
+    "sensitivity": 1.6,
+    "pause_button": 9,
+    "reset_button": 0,
+    "drive_button": 5,
+    "reverse_button": 4,
+    "neutral_button": 1
+  },
+  "controls": {
+    "throttle": 0,
+    "brake": 0,
+    "steer_deg": -0.0
+  },
+  "ready": true
+}

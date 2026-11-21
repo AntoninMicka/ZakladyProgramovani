@@ -20,6 +20,16 @@ etapy jsou v [dokumentaci modelu auta](docs/auto.md).
 Záložka **Schéma motoru / vozu** obsahuje interaktivní půdorys celého auta
 a řez motoru; palubní deska navíc ukazuje malý vůz s rychlostmi a brzdami kol.
 
+## Jízda po okruhu s joypadem
+
+Akce společného spouštěče **Spustit jízdu po okruhu (joypad / klávesnice)**
+propojí stávající model auta s pohledem z čelního okna i mapou, měřením kol a změnou
+přilnavosti mimo asfalt. Samostatně spusť `python main.py --gui --drive --rate 60`.
+Jízda začíná pozastavená; vyber ovládání a stiskni Pokračovat. Joypad na Linuxu
+má nastavitelné osy a tlačítka, bez ovladače fungují šipky/WASD.
+V kokpitu je volant, palubní deska a krajina se stromy a domky kolem tratě.
+Podrobnosti a omezení jsou v [návodu k jízdě](docs/jizda.md).
+
 ## Linux: instalace a spuštění
 
 Adresář se jmenuje `simulator` bez mezery na konci (původní `simulator ` byl přejmenován).

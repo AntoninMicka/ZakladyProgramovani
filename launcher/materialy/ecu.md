@@ -77,3 +77,13 @@ lokální logická simulace, bez fyzického transceiveru. Podrobný návod a dal
 
 Na palubní desce je také symbolický půdorys: přední kola se natáčejí a u každého
 kola se zobrazí rychlost a brzdový tlak z CAN. Šedá a pomlčky znamenají chybějící data.
+
+## Jízda po okruhu
+
+Akce **Spustit jízdu po okruhu (joypad / klávesnice)** otevře závodní okruh
+z kokpitu (čelní sklo, krajina, volant a přístroje), s možností přepnout mapu
+shora. Používá stejný motor, C++ ECU a podvozek; výjezd mimo asfalt mění
+přilnavost, start a kontrolní úseky měří kola. Vyber ovládání, klikni do okruhu
+a potvrď pokračování. Joypad lze na Linuxu mapovat podle živého výpisu os
+a tlačítek. Bez něj fungují šipky/WASD a mezerník. Ztráta vstupu jízdu pozastaví.
+Návod: [jízda s joypadem](../../simulator/docs/jizda.md).

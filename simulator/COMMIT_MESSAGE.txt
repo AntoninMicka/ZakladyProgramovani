@@ -1,7 +1,17 @@
-feat: doplnit interaktivní schéma vozu a symbol na palubní desce
+feat: přidat jízdu po okruhu s joypadem nad společným modelem auta
 
-- přidat SVG celého vozu s pohonem, koly, senzory a propojením CAN
-- rozdělit záložku schémat na celý vůz a původní řez motoru
-- zobrazit živé hodnoty dílů a barevné stavy kol, řazení a ABS/ESP
-- doplnit symbol auta s natočením kol, rychlostmi a brzdovými tlaky z CAN
-- při timeoutu zobrazit chybějící data a doplnit testy i návod
+- doplnit polohu vozu, okruh, povrchy a měření platných kol
+- přidat neblokující Linux joypad vstup a uložitelná mapování os/tlačítek
+- doplnit ovládání klávesnicí, mapu a perspektivní pohled z čelního okna
+- vykreslit krajinu, volant navázaný na řízení a palubní přístroje
+- při ztrátě vstupu či zaměření pozastavit jízdu a přidat watchdog
+- propojit režim s GUI, telemetrií a společným spouštěčem
+- přidat testy a návod včetně omezení ověření bez hardware
+
+- opravit kontrolu fokusu u interního Combobox popdown okna bez pádu GUI
+
+- rozpoznávat Xbox-like / PS4 / D-input podle ABS/BTN metadat driveru
+- doplnit mrtvou zónu pedálů, neutrální stav před rozjezdem a diagnostiku gamepadu
+
+- přidat 20krokové ověření pojmenovaných páček, kříže, tlačítek a triggerů
+- ověřovat návrat do klidu, potlačit jízdní akce a exportovat protokol bez přemapování

@@ -1,0 +1,17 @@
+{
+  "steer_axis": 0,
+  "throttle_axis": 5,
+  "brake_axis": 2,
+  "steer_invert": false,
+  "throttle_invert": false,
+  "brake_invert": false,
+  "throttle_mode": "trigger",
+  "brake_mode": "trigger",
+  "deadzone": 0.08,
+  "sensitivity": 1.6,
+  "pause_button": 7,
+  "reset_button": 0,
+  "drive_button": 5,
+  "reverse_button": 4,
+  "neutral_button": 2
+}

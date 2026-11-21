@@ -41,6 +41,7 @@ class Engine(Thread):
         self.config, self.model = config, EngineModel(config)
         from vehicle import VehicleModel
         self.vehicle = VehicleModel() if vehicle else None
+        self.driving = None
         self.signals = signals or SignalGenerator()
         self.lock, self.stop_event, self.wake = RLock(), Event(), Event()
         self.paused = False
@@ -71,8 +72,58 @@ class Engine(Thread):
                 # CAN i podvozek navazují na stejný virtuální čas motoru.
             elif not enabled:
                 self.vehicle = None
+                self.driving = None
             self.model.drivetrain_load_nm = 0.0
             self.model.torque_factor = 1.0
+
+    def enable_driving(self):
+        from racetrack import DrivingSession
+        from vehicle import VehicleModel
+        with self.lock:
+            self.vehicle = VehicleModel(start_us=self.clock.time_us)
+            self.driving = DrivingSession(self.clock.time_us)
+            self.vehicle.heading = self.driving.heading
+            self.vehicle.command({"selector": "D", "brake": 1.0})
+            self.model.command({"throttle": 0.0})
+            self.model.drivetrain_load_nm = 0.0
+            self.model.torque_factor = 1.0
+            self.paused = True
+        self.wake.set()
+
+    def drive_input(self, throttle, brake, steer_deg, source="keyboard"):
+        import math
+        values = (throttle, brake, steer_deg)
+        if (not all(type(x) in (int, float) and math.isfinite(x) for x in values)
+                or not 0 <= throttle <= 1 or not 0 <= brake <= 1
+                or not -30 <= steer_deg <= 30 or source not in ("keyboard", "joypad", "demo")):
+            raise ValueError("Neplatné ovládání jízdy")
+        with self.lock:
+            if self.driving is None or self.vehicle is None:
+                raise ValueError("Režim jízdy není zapnutý")
+            self.model.command({"throttle": throttle})
+            self.vehicle.command({"brake": brake, "steer_deg": steer_deg})
+            self.driving.last_input_us = self.clock.time_us
+            self.driving.source = source
+
+    def pause_driving(self, reason="Jízda pozastavena"):
+        with self.lock:
+            if self.driving is not None:
+                self.driving.armed = False
+                self.driving.input_fault = reason
+                self.model.command({"throttle": 0.0})
+                self.vehicle.command({"brake": 1.0, "steer_deg": 0.0})
+                self.paused = True
+        self.wake.set()
+
+    def resume_driving(self):
+        with self.lock:
+            if self.driving is None:
+                raise ValueError("Režim jízdy není zapnutý")
+            self.driving.armed = True
+            self.driving.input_fault = ""
+            self.driving.last_input_us = self.clock.time_us
+            self.paused = False
+        self.wake.set()
 
     def vehicle_command(self, data):
         if self.vehicle is None:
@@ -100,6 +151,7 @@ class Engine(Thread):
                 **self.model.snapshot(),
                 **({"vehicle": self.vehicle.snapshot(), "coolant_c": self.vehicle.coolant,
                     "clt_c": self.vehicle.coolant} if self.vehicle is not None else {}),
+                **({"driving": self.driving.snapshot()} if self.driving is not None else {}),
                 "time_s": self.clock.time_us / 1e6,
                 "simulation_time_us": self.clock.time_us,
                 "paused": self.paused,
@@ -152,6 +204,11 @@ class Engine(Thread):
                         self.diagnostics["rejected_commands"] += 1
                     else:
                         heapq.heappush(self.pending, (timestamp, next(self.order), data))
+            if self.driving is not None:
+                if self.driving.armed and self.clock.time_us - self.driving.last_input_us > 500_000:
+                    self.pause_driving("Vstup se neobnovil do 0,5 s simulačního času")
+                if not self.driving.armed:
+                    self.paused = True
             if self.paused:
                 return
             start_us = self.clock.time_us
@@ -173,8 +230,12 @@ class Engine(Thread):
             # Auto integrujeme JEDNOU po dokončení motorového makrokroku.
             # Predikce CKP v _advance_segment nesmí posunout podvozek podruhé.
             if self.vehicle is not None:
+                if self.driving is not None:
+                    self.driving.before_step(self.vehicle)
                 self.vehicle.step(self.dt, self.model.rpm, self.model.combustion_torque(),
                                   self.model.throttle, self.model.injector_ms * 1000, self.config.cylinders)
+                if self.driving is not None:
+                    self.driving.step(self.vehicle, self.dt, end_us)
                 self.model.drivetrain_load_nm = self.vehicle.engine_load_nm
                 self.model.torque_factor = self.vehicle.torque_factor
             self.clock.advance()
@@ -239,6 +300,13 @@ class Engine(Thread):
             if self.vehicle is not None:
                 from vehicle import VehicleModel
                 self.vehicle = VehicleModel(self.vehicle.config)
+            if self.driving is not None:
+                from racetrack import DrivingSession
+                self.driving = DrivingSession()
+                self.vehicle.heading = self.driving.heading
+                self.vehicle.command({"selector": "D", "brake": 1.0})
+                self.model.command({"throttle": 0.0})
+                self.paused = True
             self.clock.reset()
             if self.local_ecu is not None:
                 self.local_ecu.reset(0, self.model.throttle)

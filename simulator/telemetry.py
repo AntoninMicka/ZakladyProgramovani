@@ -34,6 +34,9 @@ def format_sample(state, bridge, wall_elapsed_s):
         text += (f" CAR={vehicle['speed_kmh']:.1f}km/h gear={vehicle['gear']}"
                  f" ABS={vehicle['abs_active']} ESP={vehicle['esp_active']}"
                  f" CAN={vehicle['can']['delivered']}/{vehicle['can']['dropped']}")
+    driving = state.get("driving")
+    if driving:
+        text += f" LAP={driving['laps']} lap_time={driving['lap_time_s']:.2f}s off_track={driving['off_track']}"
     hardware = bridge.get("hardware")
     if hardware:
         text += (

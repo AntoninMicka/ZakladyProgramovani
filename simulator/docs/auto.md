@@ -194,6 +194,11 @@ v tomto prostředí nebyl dostupný displej, proto vizuální ovládání není 
 Šest starších testů předpokládá původní lineární dávku z pedálu a s již upraveným
 studentským regulátorem selhává i bez této změny; regulátor nebyl přepisován.
 
+## Jízda po okruhu
+
+Na tento model nyní navazuje [režim jízdy s joypadem](jizda.md): poloha vozu,
+uzavřený okruh, změna povrchu, měření kol a nastavení ovladače.
+
 ## Další navazující etapy
 
 Tato etapa propojuje všechny požadované části do funkčního výukového celku.

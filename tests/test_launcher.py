@@ -100,6 +100,14 @@ class LauncherTests(unittest.TestCase):
         self.assertNotIn("--rpm", plan.commands[0])
         self.assertEqual(plan.cwd, ROOT / "simulator")
 
+    def test_driving_launcher_uses_shared_simulator_with_circuit(self):
+        project = get_project("ecu")
+        action = next(a for a in project.actions if a.id == "jizda")
+        plan = make_plan(project, action)
+        self.assertIn("--drive", plan.commands[0])
+        self.assertIn("--gui", plan.commands[0])
+        self.assertNotIn("--rpm", plan.commands[0])
+
     def test_missing_wokwi_token_fails_before_build(self):
         p = get_project("arduino")
         with patch.dict(os.environ, {}, clear=True):
