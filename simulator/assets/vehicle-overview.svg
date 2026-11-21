@@ -1,0 +1,83 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 940" font-family="DejaVu Sans, sans-serif">
+  <title>Schéma celého vozu – přední pohon, CAN, TCU, ABS/ESP</title>
+  <desc>Interaktivní výukový půdorys. Příď je nahoře, levá strana vozu vlevo. Mechanický pohon modře, komunikace CAN fialově čárkovaně.</desc>
+  <text x="35" y="42" fill="#334155" font-size="30" font-weight="bold">CELÝ VŮZ · PŘEDNÍ POHON</text>
+  <text x="35" y="74" fill="#334155" font-size="19">Příď ↑ · FL/FR přední, RL/RR zadní · klikni na součást pro živé hodnoty</text>
+  <polygon points="510 110 830 110 885 165 905 740 850 850 490 850 435 740 455 165" fill="#cbd5e1" fill-opacity=".22" stroke="#64748b" stroke-width="4" data-part="body" />
+  <polygon points="500 460 840 460 815 540 525 540" fill="#bfdbfe" stroke="#64748b" stroke-width="2" data-part="body" />
+  <rect x="525" y="550" width="290" height="105" fill="#e2e8f0" stroke="#94a3b8" data-part="body" />
+  <polygon points="525 670 815 670 840 710 500 710" fill="#bfdbfe" stroke="#64748b" data-part="body" />
+  <text x="565" y="598" fill="#334155" font-size="20" data-part="body">PROSTOR POSÁDKY</text>
+  <polyline points="675 190 675 420" fill="none" stroke="#0284c7" stroke-width="10" data-part="differential" />
+  <polyline points="435 420 940 420" fill="none" stroke="#0284c7" stroke-width="10" data-part="differential" />
+  <polyline points="435 770 940 770" fill="none" stroke="#94a3b8" stroke-width="5" data-part="body" />
+  <rect x="560" y="140" width="230" height="70" rx="10" fill="#dbeafe" stroke="#475569" stroke-width="2" data-part="engine" />
+  <text x="572" y="170" fill="#334155" font-size="19" data-part="engine" font-weight="bold">MOTOR + ECU</text>
+  <rect x="605" y="225" width="140" height="48" rx="10" fill="#e0f2fe" stroke="#475569" stroke-width="2" data-part="clutch" />
+  <text x="617" y="255" fill="#334155" font-size="19" data-part="clutch" font-weight="bold">SPOJKA</text>
+  <rect x="570" y="288" width="210" height="60" rx="10" fill="#bae6fd" stroke="#475569" stroke-width="2" data-part="gearbox" data-active="yes" />
+  <text x="582" y="318" fill="#334155" font-size="19" data-part="gearbox" font-weight="bold">PŘEVODOVKA</text>
+  <rect x="590" y="380" width="170" height="65" rx="10" fill="#bae6fd" stroke="#475569" stroke-width="2" data-part="differential" />
+  <text x="602" y="410" fill="#334155" font-size="19" data-part="differential" font-weight="bold">DIFERENCIÁL</text>
+  <text x="560" y="125" fill="#334155" font-size="18" data-part="engine">PŘÍĎ ↑</text>
+  <rect x="405" y="365" width="55" height="110" fill="#14b8a6" stroke="#334155" stroke-width="3" data-part="wheel-FL" data-active="yes" />
+  <polyline points="410 385 455 385" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FL" />
+  <polyline points="410 410 455 410" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FL" />
+  <polyline points="410 435 455 435" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FL" />
+  <polyline points="410 460 455 460" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FL" />
+  <text x="413" y="353" fill="#334155" font-size="23" data-part="wheel-FL" font-weight="bold">FL</text>
+  <rect x="905" y="365" width="55" height="110" fill="#14b8a6" stroke="#334155" stroke-width="3" data-part="wheel-FR" data-active="yes" />
+  <polyline points="910 385 955 385" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FR" />
+  <polyline points="910 410 955 410" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FR" />
+  <polyline points="910 435 955 435" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FR" />
+  <polyline points="910 460 955 460" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-FR" />
+  <text x="913" y="353" fill="#334155" font-size="23" data-part="wheel-FR" font-weight="bold">FR</text>
+  <rect x="405" y="715" width="55" height="110" fill="#14b8a6" stroke="#334155" stroke-width="3" data-part="wheel-RL" data-active="yes" />
+  <polyline points="410 735 455 735" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RL" />
+  <polyline points="410 760 455 760" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RL" />
+  <polyline points="410 785 455 785" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RL" />
+  <polyline points="410 810 455 810" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RL" />
+  <text x="413" y="703" fill="#334155" font-size="23" data-part="wheel-RL" font-weight="bold">RL</text>
+  <rect x="905" y="715" width="55" height="110" fill="#14b8a6" stroke="#334155" stroke-width="3" data-part="wheel-RR" data-active="yes" />
+  <polyline points="910 735 955 735" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RR" />
+  <polyline points="910 760 955 760" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RR" />
+  <polyline points="910 785 955 785" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RR" />
+  <polyline points="910 810 955 810" fill="none" stroke="#f8fafc" stroke-width="2" data-part="wheel-RR" />
+  <text x="913" y="703" fill="#334155" font-size="23" data-part="wheel-RR" font-weight="bold">RR</text>
+  <rect x="570" y="755" width="210" height="55" rx="10" fill="#fef3c7" stroke="#475569" stroke-width="2" data-part="fuel" />
+  <text x="582" y="785" fill="#334155" font-size="19" data-part="fuel" font-weight="bold">PALIVOVÁ NÁDRŽ</text>
+  <rect x="35" y="150" width="300" height="65" rx="10" fill="#ede9fe" stroke="#475569" stroke-width="2" data-part="tcu" />
+  <text x="47" y="180" fill="#334155" font-size="19" data-part="tcu" font-weight="bold">TCU · ŘAZENÍ</text>
+  <rect x="35" y="270" width="300" height="65" rx="10" fill="#ede9fe" stroke="#475569" stroke-width="2" data-part="esp" data-active="yes" />
+  <text x="47" y="300" fill="#334155" font-size="19" data-part="esp" font-weight="bold">ABS / ESP</text>
+  <rect x="35" y="510" width="300" height="65" rx="10" fill="#dcfce7" stroke="#475569" stroke-width="2" data-part="sensors" />
+  <text x="47" y="540" fill="#334155" font-size="19" data-part="sensors" font-weight="bold">SNÍMAČE A PROVOZ</text>
+  <rect x="35" y="640" width="300" height="65" rx="10" fill="#dcfce7" stroke="#475569" stroke-width="2" data-part="steering" />
+  <text x="47" y="670" fill="#334155" font-size="19" data-part="steering" font-weight="bold">ŘÍZENÍ / STÁČENÍ</text>
+  <rect x="1060" y="510" width="300" height="65" rx="10" fill="#ede9fe" stroke="#475569" stroke-width="2" data-part="dashboard" />
+  <text x="1072" y="540" fill="#334155" font-size="19" data-part="dashboard" font-weight="bold">PALUBNÍ DESKA</text>
+  <rect x="1060" y="150" width="300" height="65" rx="10" fill="#ddd6fe" stroke="#475569" stroke-width="2" data-part="can" data-active="yes" />
+  <text x="1072" y="180" fill="#334155" font-size="19" data-part="can" font-weight="bold">CAN · 500 kbit/s</text>
+  <polyline points="1020 180 1020 830 370 830 370 180 335 180" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="335 300 370 300" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="335 540 370 540" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="335 670 370 670" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="1020 180 1060 180" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="1020 540 1060 540" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="790 175 1020 175" fill="none" stroke="#7c3aed" stroke-width="3" data-part="can" stroke-dasharray="8 6" />
+  <polyline points="370 180 390 180 390 318 570 318" fill="none" stroke="#a78bfa" stroke-width="2" data-part="tcu" stroke-dasharray="8 6" />
+  <polyline points="405 420 370 420" fill="none" stroke="#a78bfa" stroke-width="2" data-part="sensors" stroke-dasharray="8 6" />
+  <polyline points="960 420 1020 420" fill="none" stroke="#a78bfa" stroke-width="2" data-part="sensors" stroke-dasharray="8 6" />
+  <polyline points="405 770 370 770" fill="none" stroke="#a78bfa" stroke-width="2" data-part="sensors" stroke-dasharray="8 6" />
+  <polyline points="960 770 1020 770" fill="none" stroke="#a78bfa" stroke-width="2" data-part="sensors" stroke-dasharray="8 6" />
+  <text x="1070" y="260" fill="#334155" font-size="17" data-part="can">Komunikace řídicích jednotek</text>
+  <text x="1070" y="290" fill="#334155" font-size="17" data-part="can">Snímače → CAN → TCU / ESP</text>
+  <text x="1070" y="320" fill="#334155" font-size="17" data-part="dashboard">CAN → palubní přístroje</text>
+  <text x="1070" y="615" fill="#334155" font-size="19" font-weight="bold">Barvy kol:</text>
+  <text x="1070" y="650" fill="#0f766e" font-size="18">Tyrkysová: běžný stav</text>
+  <text x="1070" y="680" fill="#dc2626" font-size="18">Červená: brzdění</text>
+  <text x="1070" y="710" fill="#b45309" font-size="18">Oranžová: skluz</text>
+  <text x="35" y="895" fill="#334155" font-size="19">Modrá silná: mechanický přenos momentu · Fialová čárkovaná: komunikace CAN</text>
+  <text x="35" y="925" fill="#334155" font-size="17">Výukové rozmístění součástí, nikoli konstrukční výkres. Živé hodnoty pocházejí z aktivního modelu.</text>
+</svg>

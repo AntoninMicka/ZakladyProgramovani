@@ -1,8 +1,7 @@
-feat: rozšířit motorový simulátor o první model auta
+feat: doplnit interaktivní schéma vozu a symbol na palubní desce
 
-- propojit motor se spojkou, šestistupňovou převodovkou, TCU a diferenciálem
-- přidat dynamiku čtyř kol, brzdy, zjednodušené ABS/ESP a typické senzory
-- zavést virtuální CAN s prioritami, latencí, timeouty a monitorem zpráv
-- doplnit palubní desku, ovládání vozidla a akci společného spouštěče
-- přidat deterministický scénář jízdy, testy a dokumentaci dalších etap
-- zachovat současný studentský regulátor a samostatný režim motoru
+- přidat SVG celého vozu s pohonem, koly, senzory a propojením CAN
+- rozdělit záložku schémat na celý vůz a původní řez motoru
+- zobrazit živé hodnoty dílů a barevné stavy kol, řazení a ABS/ESP
+- doplnit symbol auta s natočením kol, rychlostmi a brzdovými tlaky z CAN
+- při timeoutu zobrazit chybějící data a doplnit testy i návod

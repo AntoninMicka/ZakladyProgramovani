@@ -12,6 +12,7 @@ from wokwi_gui import WokwiPanel
 from ecu_editor import EcuEditor
 from engine_diagram import EngineDiagram
 from vehicle_gui import VehiclePanel
+from vehicle_diagram import VehicleDiagram
 
 BG = "#0f172a"
 PANEL = "#1e293b"
@@ -107,8 +108,18 @@ class EngineView:
             editor_page, self.wokwi_panel, lambda: notebook.select(wokwi_page)
         )
         self.diagram_page = ttk.Frame(notebook, padding=10)
-        notebook.add(self.diagram_page, text="Schéma motoru")
-        self.engine_diagram = EngineDiagram(self.diagram_page, app)
+        notebook.add(self.diagram_page, text="Schéma motoru / vozu")
+        self.diagram_tabs = ttk.Notebook(self.diagram_page)
+        self.diagram_tabs.pack(fill="both", expand=True)
+        self.engine_drawing_page = ttk.Frame(self.diagram_tabs, padding=6)
+        self.car_drawing_page = ttk.Frame(self.diagram_tabs, padding=6)
+        self.diagram_tabs.add(self.car_drawing_page, text="Celý vůz")
+        self.diagram_tabs.add(self.engine_drawing_page, text="Řez motoru")
+        self.engine_diagram = EngineDiagram(self.engine_drawing_page, app)
+        self.vehicle_diagram = VehicleDiagram(self.car_drawing_page, app)
+        self.diagram_tabs.select(
+            self.car_drawing_page if app.engine.vehicle is not None else self.engine_drawing_page
+        )
         self.vehicle_page = ttk.Frame(notebook, padding=10)
         notebook.add(self.vehicle_page, text="Auto / palubní deska")
         self.vehicle_panel = VehiclePanel(self.vehicle_page, app)
@@ -343,6 +354,7 @@ class EngineView:
                 self.vehicle_panel.refresh(frame)
             if self.notebook.select() == str(self.diagram_page):
                 self.engine_diagram.refresh(frame, diagnostics)
+                self.vehicle_diagram.refresh(frame, diagnostics)
             link = (
                 "MOCK · bez Wokwi"
                 if self.app.mode == "mock"

@@ -258,18 +258,27 @@ class SvgCanvas:
 
 
 class EngineDiagram:
+    SVG_PATH = SVG_PATH
+    RENDERER = SvgCanvas
+    DETAILS = staticmethod(component_details)
+    HEADING = "Průhledový řez · kliknutím vyber díl"
+    HINT = "Krátké pulzy mohou proběhnout mezi dvěma obnoveními obrazovky. Schéma neměří piny Wokwi."
+    INITIAL_PART = "ecu"
+    SAVE_NAME = "schema-motoru.svg"
+    STATUS = "Samostatné SVG má průhledné pozadí. Řez je ilustrační čtyřválec; hodnoty patří aktivnímu modelu."
+
     def __init__(self, page, app):
         import tkinter as tk
         from tkinter import ttk
 
         self.app = app
         self.page = page
-        self.selected = "ecu"
+        self.selected = self.INITIAL_PART
         self.state = app.engine.snapshot()
         self.diagnostics = {}
         toolbar = ttk.Frame(page)
         toolbar.pack(fill="x", pady=(0, 8))
-        ttk.Label(toolbar, text="Průhledový řez · kliknutím vyber díl").pack(side="left")
+        ttk.Label(toolbar, text=self.HEADING).pack(side="left")
         self.zoom = tk.StringVar(value="Přizpůsobit")
         zoom = ttk.Combobox(
             toolbar,
@@ -282,7 +291,7 @@ class EngineDiagram:
         zoom.bind("<<ComboboxSelected>>", lambda event: self.redraw())
         ttk.Button(toolbar, text="Uložit SVG…", command=self.save_svg).pack(side="right")
         ttk.Button(
-            toolbar, text="Otevřít SVG", command=lambda: webbrowser.open(SVG_PATH.as_uri())
+            toolbar, text="Otevřít SVG", command=lambda: webbrowser.open(self.SVG_PATH.as_uri())
         ).pack(side="right", padx=8)
         split = ttk.Panedwindow(page, orient="horizontal")
         split.pack(fill="both", expand=True)
@@ -301,7 +310,7 @@ class EngineDiagram:
         horizontal.grid(row=1, column=0, sticky="ew")
         drawing.rowconfigure(0, weight=1)
         drawing.columnconfigure(0, weight=1)
-        self.renderer = SvgCanvas(self.canvas)
+        self.renderer = self.RENDERER(self.canvas, self.SVG_PATH)
         self.canvas.bind("<Configure>", lambda event: self.redraw())
         self.canvas.bind("<Button-1>", self.clicked)
         self.title = tk.StringVar()
@@ -320,13 +329,11 @@ class EngineDiagram:
         ttk.Label(side, textvariable=self.values, wraplength=260, justify="left").pack(anchor="w")
         ttk.Label(
             side,
-            text="Krátké pulzy mohou proběhnout mezi dvěma obnoveními obrazovky. Schéma neměří piny Wokwi.",
+            text=self.HINT,
             wraplength=260,
             foreground="#94a3b8",
         ).pack(anchor="w", pady=20)
-        self.status = tk.StringVar(
-            value="Samostatné SVG má průhledné pozadí. Řez je ilustrační čtyřválec; hodnoty patří aktivnímu modelu."
-        )
+        self.status = tk.StringVar(value=self.STATUS)
         ttk.Label(page, textvariable=self.status, wraplength=1060).pack(anchor="w", pady=(8, 0))
         self.show_details()
 
@@ -373,7 +380,7 @@ class EngineDiagram:
         self.show_details()
 
     def show_details(self):
-        title, explanation, values = component_details(
+        title, explanation, values = self.DETAILS(
             self.selected, self.state, self.diagnostics, self.app.engine.signals
         )
         self.title.set(title)
@@ -392,12 +399,12 @@ class EngineDiagram:
             parent=self.page.winfo_toplevel(),
             title="Uložit průhledné SVG schéma",
             defaultextension=".svg",
-            initialfile="schema-motoru.svg",
+            initialfile=self.SAVE_NAME,
             filetypes=(("SVG", "*.svg"),),
         )
         if selected:
             try:
-                shutil.copyfile(SVG_PATH, selected)
+                shutil.copyfile(self.SVG_PATH, selected)
                 self.status.set("Uloženo statické SVG s průhledným pozadím: " + selected)
             except OSError as exc:
                 self.status.set("SVG se nepodařilo uložit: " + str(exc))

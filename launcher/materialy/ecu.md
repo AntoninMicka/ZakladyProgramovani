@@ -35,7 +35,8 @@ regulátor požadovaných otáček zatím není hotový — je studentským úko
 ## Ovládání okna ECU
 
 - **Motor:** pedál, zátěž, pauza a rychlost zobrazení/simulace.
-- **Schéma motoru:** průhledový řez se snímači, vstřikovači, cívkami a ECU.
+- **Schéma motoru / vozu:** celý vůz s pohonem, koly a CAN propojením; druhý podpanel
+  obsahuje průhledový řez se snímači, vstřikovači, cívkami a ECU.
   Kliknutím zobrazíš úlohu dílu a živé hodnoty; SVG lze přiblížit a uložit.
 - **Telemetrie:** aktuální hodnoty a historie s možností exportu.
 - **Editor ECU:** otevři `firmware/include/ecu_controller.h`, najdi označenou
@@ -73,3 +74,6 @@ základní brzdy zůstávají funkční. Pauza a zpomalení platí pro celé aut
 Jde o první výukový model, nikoli detailní dynamiku skutečného auta. Přenos CAN je
 lokální logická simulace, bez fyzického transceiveru. Podrobný návod a další etapy:
 [model auta](../../simulator/docs/auto.md).
+
+Na palubní desce je také symbolický půdorys: přední kola se natáčejí a u každého
+kola se zobrazí rychlost a brzdový tlak z CAN. Šedá a pomlčky znamenají chybějící data.

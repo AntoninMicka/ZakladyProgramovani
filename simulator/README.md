@@ -17,6 +17,8 @@ Spusť `python main.py --gui --vehicle`, zvol `D` a přidej pedál. Ve společn�
 spouštěči je akce **Spustit simulaci auta s palubní deskou**. V původním GUI
 lze model zapnout také v nové záložce. Návod, CAN protokol, omezení, ověření a další
 etapy jsou v [dokumentaci modelu auta](docs/auto.md).
+Záložka **Schéma motoru / vozu** obsahuje interaktivní půdorys celého auta
+a řez motoru; palubní deska navíc ukazuje malý vůz s rychlostmi a brzdami kol.
 
 ## Linux: instalace a spuštění
 

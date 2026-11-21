@@ -70,7 +70,7 @@ class EngineDiagramGuiTests(unittest.TestCase):
             root.update()
             panel = view.engine_diagram
             self.assertIn(
-                "Schéma motoru", [view.notebook.tab(tab, "text") for tab in view.notebook.tabs()]
+                "Schéma motoru / vozu", [view.notebook.tab(tab, "text") for tab in view.notebook.tabs()]
             )
             shapes = len(panel.canvas.find_withtag("shape"))
             expected = sum(

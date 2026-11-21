@@ -45,6 +45,27 @@ Pauza a rychlost simulace platí i pro podvozek a CAN. Reset začne znovu v neut
 s nulovou rychlostí, výchozím povrchem a prázdnou historií CAN. Použití nové ECU
 rovněž resetuje auto. Vypnutí modelu auta odstraní jeho momentové zatížení motoru.
 
+## Schéma vozu a symbol na přístrojích
+
+Záložka **Schéma motoru / vozu** má dva podpanely: **Celý vůz** a původní
+**Řez motoru**. Ve voze je příď nahoře; FL/FR jsou přední levé/pravé kolo,
+RL/RR zadní levé/pravé. Modře je zakreslen přenos momentu přes spojku,
+převodovku a přední diferenciál; fialově čárkovaně CAN propojení ECU, TCU,
+ABS/ESP, snímačů a přístrojů. Kliknutím na díl zobrazíš jeho význam a aktuální
+hodnoty modelu. Schéma lze přiblížit a uložit jako samostatné průhledné SVG.
+Barvy kol ukazují běžný stav, brzdění či skluz, ABS/ESP a převodovka zvýrazňují zásah/řazení.
+
+Pod rychloměrem a otáčkoměrem je menší **symbolický vůz** se čtyřmi koly,
+rychlostmi a tlaky brzd. Přední kola se natáčejí podle doručeného úhlu řízení.
+Tento pohled stejně jako přístroje používá doručené CAN hodnoty: po timeoutu
+zešedne a místo čísel ukáže pomlčky. Podrobné schéma naopak vysvětluje přímo
+stav modelu, i když komunikace vypadla. Obrys a rozmístění dílů jsou výukové,
+nikoli konstrukční výkres. Při vypnutém modelu auta jsou popisy schématu
+výslovně označené jako ilustrační.
+
+Zdrojové SVG je v `assets/vehicle-overview.svg`, společné vykreslení a živé
+popisy v `vehicle_diagram.py`. Řez motoru se nadále čte z původního SVG.
+
 ## Co je propojeno
 
 ```mermaid

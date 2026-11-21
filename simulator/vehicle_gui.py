@@ -4,6 +4,8 @@ import math
 import tkinter as tk
 from tkinter import ttk
 
+from vehicle_diagram import draw_symbol
+
 BG = "#0f172a"
 PANEL = "#1e293b"
 TEXT = "#e2e8f0"
@@ -98,7 +100,7 @@ class VehiclePanel:
         )
         self.status = tk.StringVar(value="Zapni model auta a zvol D pro jízdu.")
         ttk.Label(parent, textvariable=self.status).pack(anchor="w", pady=6)
-        self.canvas = tk.Canvas(parent, height=260, bg=BG, highlightthickness=0)
+        self.canvas = tk.Canvas(parent, height=420, bg=BG, highlightthickness=0)
         self.canvas.pack(fill="x")
         pages = ttk.Notebook(parent)
         pages.pack(fill="both", expand=True)
@@ -254,6 +256,18 @@ class VehiclePanel:
             text=f"Palivo: {number(d['fuel_pct'], '%')}     Kapalina: {number(d['coolant_c'], '°C')}     Síť: {number(d['battery_v'], 'V')}",
             fill=TEXT,
             font=("Sans", 11),
+        )
+        draw_symbol(self.canvas, state, width / 2 - 170, 270)
+        self.canvas.create_text(
+            18, 285, anchor="nw", text="VŮZ · POHLED SHORA", fill=TEXT, font=("Sans", 11, "bold")
+        )
+        self.canvas.create_text(
+            18,
+            315,
+            anchor="nw",
+            text="Tyrkysová: běžný stav\nČervená: brzdění\nOranžová: skluz · šedá: bez CAN dat",
+            fill="#94a3b8",
+            font=("Sans", 10),
         )
         self.status.set(
             f"Ujeto {vehicle['distance_m']:.1f} m · zatížení od spojky {vehicle['engine_load_nm']:.1f} Nm · "
