@@ -15,3 +15,7 @@ feat: přidat jízdu po okruhu s joypadem nad společným modelem auta
 
 - přidat 20krokové ověření pojmenovaných páček, kříže, tlačítek a triggerů
 - ověřovat návrat do klidu, potlačit jízdní akce a exportovat protokol bez přemapování
+
+- upravit přístrojový štít: budíky, uprostřed vůz/motor, nahoře stupeň a dole kontrolky
+
+- vložit zmenšený štít do věnce většího volantu a napravo přidat dvě živé diagnostiky

@@ -37,7 +37,14 @@ souřadnic, na kterých se pohybuje skutečný model auta; zatáčení tedy měn
 Stromy a domky mají pevná místa vedle okruhu, ale zatím nemají kolize. Kopce
 jsou dekorace na horizontu, silnice je rovinná.
 
-V záběru je čelní sklo s A-sloupky, volant a palubní deska. Volant se otáčí
+V záběru je čelní sklo s A-sloupky, volant a palubní deska. Přístrojový štít
+je zmenšený uvnitř většího věnce volantu. Má vlevo číslovaný otáčkoměr,
+vpravo rychloměr a mezi nimi symbol vozu
+s motorem a barevnými stavy kol. Nad symbolem je rychlostní stupeň, pod ním
+kontrolky ABS, ESP, CAN, oleje a teploty. Napravo od volantu jsou dva diagnostické
+displeje: motor/TCU (otáčky, plyn, vstřik, MAP, lambda, teplota, spojka a palivo)
+a podvozek/CAN (rychlosti kol, zásahy ABS/ESP, stáčení a počty zpráv). Diagnostika
+čte interní stav modelu; budíky a středový symbol nadále používají doručená CAN data. Volant se otáčí
 podle úhlu předních kol s ilustračním převodem 14:1. Otáčkoměr, rychloměr,
 převod, ABS/ESP, CAN, palivo a teplota používají současná data palubní desky.
 Dva malé sloupce ukazují skutečný požadavek plynu a brzdy, aby šlo ověřit

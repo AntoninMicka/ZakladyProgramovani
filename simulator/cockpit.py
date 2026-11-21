@@ -7,6 +7,7 @@ Nemění fyziku ani vstupní zařízení; nepoužívá druhý model pohybu auta.
 import math
 
 from racetrack import Circuit
+from vehicle_diagram import symbol_state, wheel_polygon
 
 
 def clip_near(points, near=2.0):
@@ -236,53 +237,8 @@ class CockpitView:
             width * 0.13, height * 0.69, width * 0.87, height * 0.69, fill="#94a3b8", width=3
         )
         v = state.get("vehicle", {})
-        d = v.get("dashboard", {})
-        self.gauge(
-            width * 0.43, height * 0.78, height * 0.075, d.get("rpm"), 7500, "ot/min", "#4ade80"
-        )
-        self.gauge(
-            width * 0.57, height * 0.78, height * 0.075, d.get("speed_kmh"), 180, "km/h", "#38bdf8"
-        )
-        gear = d.get("gear")
-        gear_text = "—" if gear is None else "R" if gear == -1 else "N" if gear == 0 else str(gear)
-        c.create_text(
-            width * 0.73,
-            height * 0.79,
-            text=f"PŘEVOD {gear_text}",
-            fill="#e2e8f0",
-            font=("Sans", 15, "bold"),
-        )
-        lamps = (
-            ("ABS", d.get("abs", False)),
-            ("ESP", d.get("esp", False)),
-            ("CAN", d.get("can_fault", True)),
-        )
-        for i, (label, on) in enumerate(lamps):
-            c.create_text(
-                width * 0.62 + i * width * 0.065,
-                height * 0.85,
-                text=label,
-                fill="#fbbf24" if on else "#64748b",
-                font=("Sans", 11, "bold"),
-            )
-
-        def number(value, unit):
-            return "—" if value is None else f"{value:.0f} {unit}"
-
-        c.create_text(
-            width * 0.70,
-            height * 0.92,
-            text=f"Palivo {number(d.get('fuel_pct'), '%')} · {number(d.get('coolant_c'), '°C')}",
-            fill="#94a3b8",
-            font=("Sans", 10),
-        )
-        for i in range(5):
-            x = width * 0.80 + i * width * 0.018
-            c.create_line(
-                x, height * 0.75, x - width * 0.008, height * 0.80, fill="#475569", width=3
-            )
         # Volant má přímou vazbu na aktuální natočení řízení, ne na směr kamery.
-        cx, cy, r = width * 0.29, height * 0.91, height * 0.15
+        cx, cy, r = width * 0.35, height * 0.92, min(height * 0.285, width * 0.19)
         angle = -math.radians(v.get("steer_deg", 0) * 14)
         c.create_oval(
             cx - r,
@@ -323,16 +279,19 @@ class CockpitView:
             outline="#64748b",
             width=2,
         )
-        c.create_text(cx, cy, text="ECU", fill="#cbd5e1", font=("Sans", 12, "bold"))
+        c.create_text(cx, cy + r * 0.13, text="ECU", fill="#cbd5e1", font=("Sans", 12, "bold"))
+        # Přístroje se kreslí přes paprsky, aby zůstaly čitelné při otáčení volantu.
+        self.instrument_cluster(state, cx, cy, r)
+        self.diagnostic_screens(state, width, height)
         # Malé pedálové ukazatele dovolují rychle ověřit mapování ovladače.
         for i, (label, value, color) in enumerate(
             (("PLYN", state.get("throttle", 0), "#4ade80"), ("BRZDA", v.get("brake", 0), "#fb923c"))
         ):
-            x = width * 0.05 + i * width * 0.09
+            x = width * 0.035 + i * width * 0.065
             c.create_rectangle(
                 x,
                 height * 0.88,
-                x + width * 0.045,
+                x + width * 0.035,
                 height * 0.96,
                 fill="#0f172a",
                 outline="#475569",
@@ -340,13 +299,13 @@ class CockpitView:
             c.create_rectangle(
                 x,
                 height * 0.96 - value * height * 0.08,
-                x + width * 0.045,
+                x + width * 0.035,
                 height * 0.96,
                 fill=color,
                 outline="",
             )
             c.create_text(
-                x + width * 0.022, height * 0.975, text=label, fill="#94a3b8", font=("Sans", 8)
+                x + width * 0.0175, height * 0.975, text=label, fill="#94a3b8", font=("Sans", 8)
             )
         if race:
             best = "—" if race["best_lap_s"] is None else f"{race['best_lap_s']:.2f} s"
@@ -369,34 +328,260 @@ class CockpitView:
                 tags="cockpit:paused",
             )
 
+    def instrument_cluster(self, state, cx, cy, r):
+        """Zmenšený původní štít je celý uvnitř otvoru věnce volantu."""
+        c = self.canvas
+        d = state.get("vehicle", {}).get("dashboard", {})
+        c.create_polygon(
+            cx - r * 0.55,
+            cy - r * 0.62,
+            cx + r * 0.55,
+            cy - r * 0.62,
+            cx + r * 0.74,
+            cy,
+            cx - r * 0.74,
+            cy,
+            fill="#0b1420",
+            outline="#334155",
+            width=2,
+            tags="cockpit:cluster",
+        )
+        self.gauge(cx - r * 0.46, cy - r * 0.30, r * 0.19, d.get("rpm"), 8000, "ot/min", "#4ade80")
+        self.gauge(
+            cx + r * 0.46, cy - r * 0.30, r * 0.19, d.get("speed_kmh"), 180, "km/h", "#38bdf8"
+        )
+        gear = d.get("gear")
+        gear_text = "—" if gear is None else "R" if gear == -1 else "N" if gear == 0 else str(gear)
+        c.create_text(
+            cx,
+            cy - r * 0.55,
+            text=gear_text,
+            fill="#f8fafc",
+            font=("Sans", max(12, round(r * 0.10)), "bold"),
+            tags="cockpit:gear",
+        )
+        self.vehicle_icon(state, cx, cy - r * 0.46, r * 0.36, r * 0.24)
+        lamps = (
+            ("ABS", d.get("abs", False)),
+            ("ESP", d.get("esp", False)),
+            ("CAN", d.get("can_fault", True)),
+            ("OLEJ", d.get("oil_kpa") is not None and d["oil_kpa"] < 60),
+            ("TEP", d.get("coolant_c") is not None and d["coolant_c"] > 110),
+        )
+        for i, (label, on) in enumerate(lamps):
+            x = cx + (i - 2) * r * 0.155
+            c.create_rectangle(
+                x - r * 0.071,
+                cy - r * 0.13,
+                x + r * 0.071,
+                cy - r * 0.025,
+                fill="#713f12" if on else "#17202b",
+                outline="",
+            )
+            c.create_text(
+                x,
+                cy - r * 0.078,
+                text=label,
+                fill="#fbbf24" if on else "#64748b",
+                font=("Sans", max(6, round(r * 0.034)), "bold"),
+                tags="cockpit:lamp",
+            )
+
+    def diagnostic_screens(self, state, width, height):
+        """Dva displeje napravo ukazují interní diagnostiku modelu a stav CAN."""
+        c = self.canvas
+        v = state.get("vehicle", {})
+        sensors = v.get("sensors", {})
+        bus = v.get("can", {})
+
+        def number(value, precision=0):
+            return "—" if value is None else f"{value:.{precision}f}"
+
+        wheels = sensors.get("wheel_speed_kmh", {})
+        motor = [
+            f"RPM {number(state.get('rpm'))}  PLYN {number(state.get('throttle', 0) * 100)}%  INJ {number(state.get('injector_ms'), 2)}ms",
+            f"MAP {number(state.get('map_kpa'), 1)}kPa  λ {number(state.get('lambda_value'), 2)}  CLT {number(sensors.get('coolant_c'), 1)}°C",
+            f"TCU {v.get('gear', '—')}  SPOJKA {number(v.get('engine_load_nm'), 1)}Nm  PALIVO {number(sensors.get('fuel_level_l'), 1)}l",
+        ]
+        chassis = [
+            "KOLA "
+            + "  ".join(f"{key} {number(wheels.get(key), 1)}" for key in ("FL", "FR", "RL", "RR")),
+            f"ABS {'ZÁSAH' if v.get('abs_active') else '—'}  ESP {'ZÁSAH' if v.get('esp_active') else '—'}  YAW {number(sensors.get('yaw_rate_deg_s'), 1)}°/s",
+            f"CAN {'—' if not bus else 'ON' if bus.get('enabled') else 'OFF'}  RX {bus.get('delivered', '—')}  DROP {bus.get('dropped', '—')}  Q {bus.get('queue_depth', '—')}",
+        ]
+        for i, (title, rows) in enumerate(
+            (("MOTOR / TCU · MODEL", motor), ("PODVOZEK / CAN · MODEL", chassis))
+        ):
+            x, y, w, h = width * 0.56, height * (0.715 + i * 0.14), width * 0.405, height * 0.135
+            c.create_rectangle(
+                x,
+                y,
+                x + w,
+                y + h,
+                fill="#030e14",
+                outline="#475569",
+                width=2,
+                tags="cockpit:diagnostic",
+            )
+            c.create_rectangle(x + 2, y + 2, x + w - 2, y + h * 0.24, fill="#12313a", outline="")
+            font = max(6, min(10, round(w / 48)))
+            c.create_text(
+                x + 10,
+                y + h * 0.13,
+                text=title,
+                anchor="w",
+                fill="#7dd3fc",
+                font=("Sans", font, "bold"),
+            )
+            for row, line in enumerate(rows):
+                c.create_text(
+                    x + 10,
+                    y + h * (0.39 + row * 0.235),
+                    text=line,
+                    anchor="w",
+                    fill="#86efac",
+                    font=("Monospace", font),
+                    tags="cockpit:diagnostic-value",
+                )
+
+    def vehicle_icon(self, state, cx, top, width, height):
+        """Půdorys s motorem, pohonem a stavy kol ze stejných CAN dat jako budíky."""
+        c = self.canvas
+        data = symbol_state(state)
+        c.create_polygon(
+            cx - width * 0.23,
+            top,
+            cx + width * 0.23,
+            top,
+            cx + width * 0.29,
+            top + height * 0.18,
+            cx + width * 0.29,
+            top + height * 0.84,
+            cx + width * 0.20,
+            top + height,
+            cx - width * 0.20,
+            top + height,
+            cx - width * 0.29,
+            top + height * 0.84,
+            cx - width * 0.29,
+            top + height * 0.18,
+            fill="#1e293b",
+            outline="#cbd5e1",
+            width=1.5,
+            tags="cockpit:car",
+        )
+        c.create_line(
+            cx - width * 0.35,
+            top + height * 0.25,
+            cx + width * 0.35,
+            top + height * 0.25,
+            fill="#38bdf8" if not data["can_fault"] else "#64748b",
+            width=2,
+        )
+        c.create_line(
+            cx - width * 0.35,
+            top + height * 0.78,
+            cx + width * 0.35,
+            top + height * 0.78,
+            fill="#64748b",
+            width=1,
+        )
+        rpm = state.get("vehicle", {}).get("dashboard", {}).get("rpm")
+        engine_color = "#64748b" if rpm is None else "#4ade80" if rpm > 300 else "#f59e0b"
+        c.create_rectangle(
+            cx - width * 0.12,
+            top + height * 0.14,
+            cx + width * 0.12,
+            top + height * 0.35,
+            fill=engine_color,
+            outline="",
+            tags="cockpit:engine",
+        )
+        c.create_polygon(
+            cx - width * 0.19,
+            top + height * 0.43,
+            cx + width * 0.19,
+            top + height * 0.43,
+            cx + width * 0.16,
+            top + height * 0.64,
+            cx - width * 0.16,
+            top + height * 0.64,
+            fill="#334155",
+            outline="#64748b",
+        )
+        for wheel, side, y in (
+            ("FL", -1, 0.25),
+            ("FR", 1, 0.25),
+            ("RL", -1, 0.78),
+            ("RR", 1, 0.78),
+        ):
+            angle = (data["steer_deg"] or 0) if wheel.startswith("F") else 0
+            c.create_polygon(
+                *wheel_polygon(
+                    cx + side * width * 0.34, top + height * y, angle, width * 0.045, height * 0.14
+                ),
+                fill=data["wheels"][wheel]["color"],
+                outline="#e2e8f0",
+                tags="cockpit:car-" + wheel,
+            )
+
     def gauge(self, cx, cy, r, value, maximum, label, color):
         c = self.canvas
-        c.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#09121c", outline="#64748b", width=2)
-        for i in range(9):
-            angle = math.radians(210 - i * 30)
+        c.create_oval(
+            cx - r - 3,
+            cy - r - 3,
+            cx + r + 3,
+            cy + r + 3,
+            fill="#17202b",
+            outline="#94a3b8",
+            width=1,
+        )
+        c.create_oval(cx - r, cy - r, cx + r, cy + r, fill="#07111c", outline="#334155", width=2)
+        divisions = 8 if label == "ot/min" else 9
+        for i in range(divisions + 1):
+            angle = math.radians(210 - i * 240 / divisions)
+            tick_color = "#f87171" if label == "ot/min" and i >= 6 else "#cbd5e1"
             c.create_line(
-                cx + math.cos(angle) * r * 0.78,
-                cy - math.sin(angle) * r * 0.78,
-                cx + math.cos(angle) * r * 0.9,
-                cy - math.sin(angle) * r * 0.9,
+                cx + math.cos(angle) * r * 0.79,
+                cy - math.sin(angle) * r * 0.79,
+                cx + math.cos(angle) * r * 0.92,
+                cy - math.sin(angle) * r * 0.92,
+                fill=tick_color,
+                width=2,
+            )
+            tick = i * maximum / divisions
+            text = f"{tick / 1000:g}" if label == "ot/min" else str(round(tick))
+            if i % 2 and i != divisions:
+                continue
+            c.create_text(
+                cx + math.cos(angle) * r * 0.63,
+                cy - math.sin(angle) * r * 0.63,
+                text=text,
                 fill="#94a3b8",
-                width=1,
+                font=("Sans", max(6, round(r * 0.12))),
             )
         if value is not None:
             angle = math.radians(210 - max(0, min(1, value / maximum)) * 240)
             c.create_line(
                 cx,
                 cy,
-                cx + math.cos(angle) * r * 0.72,
-                cy - math.sin(angle) * r * 0.72,
+                cx + math.cos(angle) * r * 0.76,
+                cy - math.sin(angle) * r * 0.76,
                 fill=color,
                 width=3,
             )
+        c.create_oval(cx - 3, cy - 3, cx + 3, cy + 3, fill="#e2e8f0", outline="")
         c.create_text(
             cx,
-            cy + r * 0.38,
+            cy + r * 0.42,
             text="—" if value is None else f"{value:.0f}",
-            fill="#e2e8f0",
-            font=("Sans", max(9, int(r * 0.29)), "bold"),
+            fill="#f8fafc",
+            font=("Sans", max(10, round(r * 0.29)), "bold"),
         )
-        c.create_text(cx, cy - r * 0.35, text=label, fill="#94a3b8", font=("Sans", 9))
+        c.create_text(
+            cx,
+            cy - r * 0.25,
+            text="×1000" if label == "ot/min" else "km/h",
+            fill="#64748b",
+            font=("Sans", max(7, round(r * 0.13))),
+        )
