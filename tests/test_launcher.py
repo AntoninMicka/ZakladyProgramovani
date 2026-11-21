@@ -32,8 +32,8 @@ def wait_for(predicate, timeout=5):
 
 class LauncherTests(unittest.TestCase):
     def test_catalog_has_real_documents_sources_and_canonical_ecu_task(self):
-        self.assertEqual(len(PROJECTS), 5)
-        self.assertEqual(len({p.id for p in PROJECTS}), 5)
+        self.assertEqual(len(PROJECTS), 6)
+        self.assertEqual(len({p.id for p in PROJECTS}), 6)
         for project in PROJECTS:
             for name in (
                 project.overview,
@@ -56,6 +56,30 @@ class LauncherTests(unittest.TestCase):
         self.assertNotIn("--rpm", plan.commands[0])
         self.assertEqual(plan.cwd, ROOT / "simulator")
         self.assertEqual(plan.commands[0][0], str(ROOT / "simulator/.venv/bin/python"))
+
+    def test_contacts_build_and_interactive_run_both_variants(self):
+        project = get_project("kontakty")
+        for action in project.actions[:2]:
+            with self.subTest(action=action.id):
+                runner = Runner()
+                runner.start(make_plan(project, action))
+                seen = []
+
+                def prompt():
+                    seen.append(runner.drain())
+                    return "Formát (xml/json/vcard/csv/txt):" in "".join(seen)
+
+                try:
+                    wait_for(prompt, timeout=30)
+                    runner.send("json")
+                    wait_for(lambda: not runner.busy)
+                    seen.append(runner.drain())
+                    self.assertEqual(runner.exit_code, 0, "".join(seen))
+                    self.assertIn("Načteno kontaktů: 6", "".join(seen))
+                    self.assertIn("Anna Nováková", "".join(seen))
+                finally:
+                    runner.stop()
+                    runner.thread.join(3)
 
     def test_missing_wokwi_token_fails_before_build(self):
         p = get_project("arduino")

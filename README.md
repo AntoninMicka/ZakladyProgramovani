@@ -23,7 +23,11 @@ spouštěč nástroje automaticky neinstaluje. Funguje i při spuštění z jin�
 | Základy C | překlad a spuštění dvou C17 programů | typy, pole, funkce, soubory |
 | Arduino / sériová linka | editor, PlatformIO build, volitelný Wokwi CLI běh | LED, sériové příkazy, ADC, krokový motor |
 | Kvadrokoptéra | editor, PlatformIO build, volitelný Wokwi CLI běh | IMU, regulátor, ARM, směšování |
+| Databáze kontaktů (pátá hodina) | překlad a spuštění varianty se šablonou či dědičností, editor | objekty, šablony, polymorfismus, pět formátů kontaktů |
 | ECU simulátor | samostatné GUI, konzolový Mock, editor projektu | motor a společná C++ ECU |
+
+**Pátá hodina:** [databáze kontaktů – šablony a dědičnost v C++](patahodina/README.md).
+Obě varianty lze přeložit a spustit ze společného spouštěče; vyžadují CMake, C++17 a libxml2.
 
 **Aktuální ECU úkol:** [automatická regulace otáček motoru](simulator/docs/ukol_regulace_otacek.md).
 Student má upravit `update_control()` v ECU: pedál zadá požadované otáčky,

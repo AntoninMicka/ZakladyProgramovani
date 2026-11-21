@@ -158,6 +158,29 @@ PROJECTS = (
             Action("editor", "Otevřít ECU projekt ve VSCodiu / VS Code", "editor"),
         ),
     ),
+    Project(
+        "kontakty",
+        "6 · Databáze kontaktů (pátá hodina)",
+        "C++17: objekty, šablony a dědičnost; XML, JSON, vCard, CSV a TXT",
+        "patahodina",
+        "patahodina/README.md",
+        "patahodina/UKOLY.md",
+        "patahodina/README.md",
+        "patahodina/sablony/main.cpp",
+        (
+            Action(
+                "sablony", "Přeložit a spustit variantu se šablonou", "cmake_run",
+                "kontakty_sablony",
+                "Vyžaduje C++17, CMake a libxml2-dev. Po sestavení zadejte formát (xml/json/vcard/csv/txt) do vstupu dole.",
+            ),
+            Action(
+                "dedicnost", "Přeložit a spustit variantu s dědičností", "cmake_run",
+                "kontakty_dedicnost",
+                "Vyžaduje C++17, CMake a libxml2-dev. Po sestavení zadejte formát (xml/json/vcard/csv/txt) do vstupu dole.",
+            ),
+            Action("editor", "Otevřít oba příklady v editoru", "editor"),
+        ),
+    ),
 )
 
 
@@ -232,6 +255,20 @@ def make_plan(project, action):
                 str(output),
             ),
             (str(output),),
+        ]
+    elif kind == "cmake_run":
+        cmake = find_tool(("cmake",))
+        build = ROOT / ".cache/launcher" / project.id
+        output = build / "bin"
+        executable = action.source + (".exe" if os.name == "nt" else "")
+        # Každý krok musí uspět, jinak Runner starou binárku nespustí.
+        commands = [
+            (cmake, "-S", str(directory), "-B", str(build),
+             "-DCMAKE_BUILD_TYPE=Debug",
+             "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=" + str(output),
+             "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG=" + str(output)),
+            (cmake, "--build", str(build), "--config", "Debug", "--target", action.source),
+            (str(output / executable),),
         ]
     elif kind == "bash":
         commands = [(find_tool(("bash",)), str(directory / action.source))]

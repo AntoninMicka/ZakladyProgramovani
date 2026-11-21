@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Svoboda;Petr;;;
+FN:Petr Svoboda
+EMAIL:petr@example.test
+TEL:+420111000002
+END:VCARD

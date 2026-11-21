@@ -1,0 +1,8 @@
+feat: přidat pátou hodinu s databází kontaktů v C++
+
+- přidat 30 kontaktových souborů ve formátech XML, JSON, vCard, CSV a TXT
+- ukázat znovupoužití pomocí šablony a dědičnosti se společnými čtečkami
+- doplnit úvod k objektům, dědičnosti a šablonám a stručné komentáře
+- doplnit český návod, studentské úkoly a CMake sestavení
+- ověřit oba programy pro všechny formáty a chybové vstupy
+- připojit obě varianty do společného spouštěče včetně překladu a zadání

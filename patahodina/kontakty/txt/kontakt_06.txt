@@ -1,0 +1,3 @@
+jmeno=Tomáš Procházka
+email=tomas@example.test
+telefon=+420111000006

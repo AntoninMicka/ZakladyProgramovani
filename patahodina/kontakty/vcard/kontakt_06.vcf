@@ -1,0 +1,7 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Procházka;Tomáš;;;
+FN:Tomáš Procházka
+EMAIL:tomas@example.test
+TEL:+420111000006
+END:VCARD

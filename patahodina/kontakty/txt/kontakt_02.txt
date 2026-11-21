@@ -1,0 +1,3 @@
+jmeno=Petr Svoboda
+email=petr@example.test
+telefon=+420111000002
