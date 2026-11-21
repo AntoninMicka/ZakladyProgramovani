@@ -161,7 +161,7 @@ PROJECTS = (
     Project(
         "kontakty",
         "6 · Databáze kontaktů (pátá hodina)",
-        "C++17: objekty, šablony a dědičnost; XML, JSON, vCard, CSV a TXT",
+        "C++17 a Python: objekty, šablony, generika a dědičnost; pět formátů",
         "patahodina",
         "patahodina/README.md",
         "patahodina/UKOLY.md",
@@ -178,7 +178,17 @@ PROJECTS = (
                 "kontakty_dedicnost",
                 "Vyžaduje C++17, CMake a libxml2-dev. Po sestavení zadejte formát (xml/json/vcard/csv/txt) do vstupu dole.",
             ),
-            Action("editor", "Otevřít oba příklady v editoru", "editor"),
+            Action(
+                "python_sablony", "Python: spustit generickou databázi", "python",
+                "python/sablony/main.py",
+                "Python 3.10+, bez dalších balíčků. Zadejte formát do vstupu dole. Generika jsou protějškem C++ šablon pro typovou kontrolu.",
+            ),
+            Action(
+                "python_dedicnost", "Python: spustit databázi s dědičností", "python",
+                "python/dedicnost/main.py",
+                "Python 3.10+, bez dalších balíčků. Zadejte xml/json/vcard/csv/txt do vstupu dole.",
+            ),
+            Action("editor", "Otevřít C++ a Python příklady v editoru", "editor"),
         ),
     ),
 )

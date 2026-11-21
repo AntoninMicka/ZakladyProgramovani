@@ -81,6 +81,16 @@ class LauncherTests(unittest.TestCase):
                     runner.stop()
                     runner.thread.join(3)
 
+    def test_contacts_python_launcher_actions(self):
+        project = get_project("kontakty")
+        for identifier in ("python_sablony", "python_dedicnost"):
+            action = next(a for a in project.actions if a.id == identifier)
+            plan = make_plan(project, action)
+            result = subprocess.run(plan.commands[0], cwd=plan.cwd, input="csv\n",
+                                    capture_output=True, text=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("Načteno kontaktů: 6", result.stdout)
+
     def test_missing_wokwi_token_fails_before_build(self):
         p = get_project("arduino")
         with patch.dict(os.environ, {}, clear=True):

@@ -83,20 +83,33 @@ struct EcuController {
     set_accelerator((volts - ECU_PEDAL_MIN_V) / (ECU_PEDAL_MAX_V - ECU_PEDAL_MIN_V));
   }
 
+  bool je_nula(double hodnota, double tolerance = 0.000001) {
+    return fabs(hodnota) <= tolerance;
+  }
+
   // === MÍSTO PRO STUDENTSKÝ ÚKOL: ROZHODOVÁNÍ O PALIVU ===
   // Tato funkce je stejná v Mock i na desce a volá se každých 10 ms simulačního času.
   // Vstupy: accelerator = poloha pedálu 0..1, rpm = otáčky změřené z CKP.
   // Výstup: injection_us = požadovaná délka vstřiku v mikrosekundách.
   // now je aktuální čas v us; může se hodit pro budoucí regulátor.
   //
-  // ZATÍM ponecháváme prostý převod „pedál -> palivo“:
-  // 3000 us při plném pedálu, 1500 us při polovině, 1050 us při 35 %.
-  // Úkol do budoucna: pedál převedeš na POŽADOVANÉ otáčky a uložíš je do requested_rpm.
-  // Porovnáš je s rpm a dávku upravíš podle rozdílu. Takový regulátor zde ještě NENÍ.
-  // Kvůli úkolu neupravuj Python model, snímače, časovače ani přímo proměnnou rpm.
+  // Pedál určí cíl, rozdíl proti změřeným otáčkám mění dávku po malých krocích.
+  // Otáčky ovlivňujeme jen palivem, nikoli přepisováním rpm.
   void update_control(uint32_t now) {
     (void)now;
-    injection_us = (uint32_t)lround(ECU_INJECTION_US * accelerator);
+    requested_rpm = 800.0 + accelerator * (3000.0 - 800.0);
+    double chyba_otacek = requested_rpm - rpm;
+
+    // Počítáme se znaménkem: uint32_t by při odečtení pod nulou přeteklo.
+    double davka_us = injection_us;
+    if (!je_nula(chyba_otacek, 10.0)) {
+      if (chyba_otacek > 0.0)
+        davka_us += 5.0;
+      else
+        davka_us -= 5.0;
+    }
+    // Nejprve omezíme rozsah, teprve potom převedeme na nezáporné celé číslo.
+    injection_us = (uint32_t)lround(fmax(0.0, fmin(20000.0, davka_us)));
   }
 
   // Převod úhlu do jednoho cyklu: výsledek bude od 0 do méně než 720 stupňů.

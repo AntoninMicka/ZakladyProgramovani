@@ -23,7 +23,7 @@ spouštěč nástroje automaticky neinstaluje. Funguje i při spuštění z jin�
 | Základy C | překlad a spuštění dvou C17 programů | typy, pole, funkce, soubory |
 | Arduino / sériová linka | editor, PlatformIO build, volitelný Wokwi CLI běh | LED, sériové příkazy, ADC, krokový motor |
 | Kvadrokoptéra | editor, PlatformIO build, volitelný Wokwi CLI běh | IMU, regulátor, ARM, směšování |
-| Databáze kontaktů (pátá hodina) | překlad a spuštění varianty se šablonou či dědičností, editor | objekty, šablony, polymorfismus, pět formátů kontaktů |
+| Databáze kontaktů (pátá hodina) | C++ a Python varianty, editor | objekty, šablony, generika, dědičnost, pět formátů kontaktů |
 | ECU simulátor | samostatné GUI, konzolový Mock, editor projektu | motor a společná C++ ECU |
 
 **Pátá hodina:** [databáze kontaktů – šablony a dědičnost v C++](patahodina/README.md).

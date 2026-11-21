@@ -5,6 +5,13 @@ První používá **šablonu třídy**, druhý **dědičnost a virtuální metod
 Databáze je zde kolekce v paměti naplněná ze souborů; nepotřebuje databázový server.
 Všechna jména a kontaktní údaje jsou smyšlené výukové příklady.
 
+## Python varianta
+
+Stejná databáze je připravena také v [Pythonu](python/README.md): generická
+třída jako protějšek šablony a samostatná varianta s dědičností. Obě jsou dostupné
+ve společném spouštěči a využívají stejné kontakty. Stačí Python 3.10+, bez dalších
+balíčků. Python generika nevytvářejí specializované třídy jako C++ šablony.
+
 ## Krátce o objektech a šablonách
 
 **Třída** je předpis, jaká data a operace budou patřit k sobě.

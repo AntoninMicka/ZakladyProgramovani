@@ -1,4 +1,4 @@
-feat: přidat pátou hodinu s databází kontaktů v C++
+feat: přidat pátou hodinu s databází kontaktů v C++ a Pythonu
 
 - přidat 30 kontaktových souborů ve formátech XML, JSON, vCard, CSV a TXT
 - ukázat znovupoužití pomocí šablony a dědičnosti se společnými čtečkami
@@ -6,3 +6,4 @@ feat: přidat pátou hodinu s databází kontaktů v C++
 - doplnit český návod, studentské úkoly a CMake sestavení
 - ověřit oba programy pro všechny formáty a chybové vstupy
 - připojit obě varianty do společného spouštěče včetně překladu a zadání
+- doplnit komentované Python varianty s generiky a dědičností, testy a akce spouštěče
